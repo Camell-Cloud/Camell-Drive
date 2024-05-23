@@ -1,0 +1,11 @@
+{
+    "eas credentials" : [
+        {
+            "Type": "JKS",
+            "Key Alis": "8d1ca958c4db7160cf03cf92859c6a2c",
+            "MD5 Fingerprint": "5A:AF:A2:5E:E6:9D:D1:DA:7F:FB:06:74:F2:A7:A4:09",
+            "SHA1 Fingerprint": "E3:98:A4:C1:07:F7:A1:2B:46:88:2C:E3:D3:75:E0:0B:68:16:AB:10",
+            "SHA256 Fingerprint": "9A:22:43:58:17:8E:C0:E5:2B:CC:A7:DC:EC:36:23:CC:93:C7:39:B0:F1:30:79:57:19:D9:11:1E:B9:C1:3F:5C"
+        }
+    ]
+}
