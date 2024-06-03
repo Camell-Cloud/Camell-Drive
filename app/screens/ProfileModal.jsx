@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Modal, View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getAuth } from "firebase/auth";
-import * as ImagePicker from 'expo-image-picker';
 
 const { width, height } = Dimensions.get('window');
 
@@ -10,28 +9,6 @@ const ProfileModal = ({ visible, onClose }) => {
   const slideAnim = useRef(new Animated.Value(-height)).current;
   const [userPhoto, setUserPhoto] = useState(null);
   const [userEmail, setUserEmail] = useState('');
-
-  const pickImageFromGallery = async () => {
-    // 갤러리 접근 권한 요청
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      alert('갤러리에 접근하기 위한 권한이 필요합니다.');
-      return;
-    }
-  
-    // 갤러리에서 이미지 선택
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-  
-    if (!result.cancelled) {
-      console.log(result.uri);
-    }
-  };
-
 
   useEffect(() => {
     const auth = getAuth();
@@ -43,7 +20,7 @@ const ProfileModal = ({ visible, onClose }) => {
     if (visible) {
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 0,
+        duration: 100,
         useNativeDriver: true,
       }).start();
     } else {
@@ -76,7 +53,7 @@ const ProfileModal = ({ visible, onClose }) => {
           </View>
 
           <View style={styles.body}>
-            <TouchableOpacity style={styles.menu} onPress={pickImageFromGallery}>
+            <TouchableOpacity style={styles.menu} onPress={() => console.log('프로필 사진 변경')}>
               <Ionicons name="image" size={20} color="#828282" />
               <Text style={styles.menuText}>프로필 사진 변경</Text>
             </TouchableOpacity>

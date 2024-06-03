@@ -1,14 +1,16 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, TextInput, StyleSheet } from 'react-native';
 import { Colors } from '../theme/color';
 import { Keyboard, TouchableWithoutFeedback } from 'react-native';
+import SubTabScreenHeader from '../main/SubTabScreenHeader';
 
 export default function ShareScreen({ navigation }) {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
+        <SubTabScreenHeader title="공유" navigation={navigation} />
         <View style={styles.mainContainer}>
-          <Text>asdfasdfasdf</Text>
+
         </View>
       </View>
     </TouchableWithoutFeedback>

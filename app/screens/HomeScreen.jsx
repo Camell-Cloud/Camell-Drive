@@ -1,9 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '../theme/color';
+import SubTabScreenHeader from '../main/SubTabScreenHeader';
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+
 
 export default function HomeScreen({ navigation }) {
     const usedStorage = 10; // 10GB 사용됨
@@ -25,6 +27,7 @@ export default function HomeScreen({ navigation }) {
 
     return (
         <View style={styles.container}>
+            <SubTabScreenHeader title="홈" navigation={navigation} />
                 <View style={styles.topContainer}>
                     <View style={styles.storageCard}>
                         <Svg height="200" width="200" viewBox="0 0 200 200" style={styles.gauge}>
@@ -89,7 +92,7 @@ export default function HomeScreen({ navigation }) {
 
                     <View style={{alignItems: 'flex-end'}}>
                       <TouchableOpacity style={styles.viewAll} onPress={() => navigation.navigate('File')}>
-                        <Text style={{color: 'blue', fontSize:12, textAlign: 'center'}}>모두 보기</Text>
+                        <Text style={{color: 'blue', fontSize:16, textAlign: 'center'}}>모두 보기</Text>
                       </TouchableOpacity>
                     </View>
 
@@ -108,7 +111,6 @@ export default function HomeScreen({ navigation }) {
                     </View>
                 </View>
         </View>
-        
     );
 }
 
@@ -162,8 +164,7 @@ const styles = StyleSheet.create({
     },
     buttonContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginHorizontal: 10,
+        marginLeft: 12,
     },
     categoryButton: {
       flexDirection: 'row',
@@ -172,6 +173,7 @@ const styles = StyleSheet.create({
       paddingHorizontal: 10,
       paddingVertical: 15,
       borderRadius: 13,
+      marginRight: 20,
     },
     selectedCategoryButton: {
       flexDirection: 'row',
@@ -180,13 +182,13 @@ const styles = StyleSheet.create({
       paddingHorizontal: 10,
       paddingVertical: 15,
       borderRadius: 13,
-
+      marginRight: 20,
     },
     
     buttonText: {
       color: 'black',
-      fontSize: 14,
-
+      fontSize: 15,
+      marginLeft: 5,
     },
     selectedButtonText:{
       color: 'white',
@@ -197,18 +199,18 @@ const styles = StyleSheet.create({
     itemContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'space-around',
-        marginBottom: 30,
+        justifyContent: 'flex-start',
     },
     item: {
-        width: '43%',
-        height: '43%',
+        width: 160,
+        height: 140,
         backgroundColor: 'white',
         borderRadius: 20,
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 10,
         marginBottom: 20,
+        marginLeft: 24,
     },
     firstSingleItem: {
         marginLeft: '10%',

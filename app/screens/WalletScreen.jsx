@@ -32,10 +32,6 @@ export default function WalletScreen({ navigation }) {
 
   const [walletAddress, setWalletAddress] = useState('TMrNryRrEtYSTff3fp5RhKUjVWBgVtKRf3'); // 지갑주소
 
-  const handleSubmit = () => {
-    alert('To be updated');
-  };
-
     // 지갑 잔액 코드
     useEffect(() => {
       if (walletAddress) {
@@ -48,7 +44,8 @@ export default function WalletScreen({ navigation }) {
               }
           })
           .catch(error => {
-              console.log("잔액을 불러오는데 실패했습니다.:", error);
+              console.error("잔액을 불러오는데 실패했습니다.:", error);
+              Alert.alert('Error', '잔액을 불러오는데 실패했습니다.: ' + error.message);
           });
       }
   }, [walletAddress]);
@@ -78,7 +75,7 @@ export default function WalletScreen({ navigation }) {
 
   // 입력값 검증
   if (parseFloat(withdrawAmount) < minimumAmount || !targetAddress) {
-    Alert.alert('Error', 'Invalid amount or address.');
+    Alert.alert('오류', '유효하지 않은 금액 또는 주소입니다.');
     return;
   }
 
@@ -97,7 +94,7 @@ export default function WalletScreen({ navigation }) {
     });
     const result = await response.json();
     if (result.success) {
-      Alert.alert('Success', 'Successful withdrawal request');
+      Alert.alert('성공', '출금 요청 성공');
       // 출금 성공 후 추가 로직
       // 예: 모달 닫기, 상태 업데이트 등
       setWithdrawalModalVisible(false);
@@ -120,7 +117,7 @@ export default function WalletScreen({ navigation }) {
         // 복사
   const copyToClipboard = (address) => {
     Clipboard.setString(address);
-    Alert.alert("Notification", "Address copied to clipboard.");
+    Alert.alert("알림", "주소가 클립보드에 복사되었습니다!");
   };
 
 const closeModal = () => {
@@ -141,11 +138,9 @@ const handleButtonPress = (buttonText) => {
       break;
     
     case '더보기':
-      handleSubmit()
       break;
     
     case '시세':
-      handleSubmit()
       break;  
     
     default:
@@ -267,35 +262,35 @@ const renderButton = (buttonText, iconName) => {
             >
               <Ionicons name="close-circle" size={40} color="#000" />
             </TouchableOpacity>
-            <Text style={styles.modalText}>Withdraw</Text>
+            <Text style={styles.modalText}>출금</Text>
             <View style={styles.inputView}>
               <View style={styles.inputForm}>
                 <View style={styles.won}>
-                  <Text>Withdrawal amount</Text>
+                  <Text>출금 수량</Text>
                   <TextInput
                     style={styles.textInput}
                     onChangeText={(text) => setWithdrawAmount(text)}
-                    placeholder="Minimum 10 CAMT"
+                    placeholder="최소 10 CAMT"
                     placeholderTextColor="#808080"
                   />
-                  <Text style={styles.wonValue}>= 0 USD</Text>
+                  <Text style={styles.wonValue}>= 0 KRW</Text>
                 </View>
-                <Text>Withdrawal target</Text>
+                <Text>출금 대상</Text>
                 <TextInput
                   style={styles.textInput}
                   onChangeText={(text) => setTargetAddress(text)}
-                  placeholder="Enter the destination address"
+                  placeholder="대상 주소 입력"
                   placeholderTextColor="#808080"
                 />
                 <View style={styles.network}>
-                  <Text style={styles.networkText}>Withdraw network</Text>
+                  <Text style={styles.networkText}>출금 네트워크</Text>
                   <View style={styles.networkValue}>
                     <Text style={styles.networkValueText}>Tron</Text>
                   </View>
                 </View>
                 <View style={styles.buttonContainer}>
-                  <TouchableOpacity style={styles.okButton} onPress={handleSubmit}>
-                    <Text style={styles.okButtonText}>Send</Text>
+                  <TouchableOpacity style={styles.okButton} onPress={handleWithdraw}>
+                    <Text style={styles.okButtonText}>확인</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -322,7 +317,7 @@ const renderButton = (buttonText, iconName) => {
       >
         <Ionicons name="close-circle" size={40} color="#000" />
       </TouchableOpacity>
-      <Text style={styles.modalText}>Deposit</Text>
+      <Text style={styles.modalText}>입금</Text>
       <View style={styles.qr}>
       <QRCode
             value={walletAddress}
@@ -332,7 +327,7 @@ const renderButton = (buttonText, iconName) => {
           />
       </View>
       <View style={styles.address}>
-        <Text style={{fontSize: 20, textAlign: 'center'}}>Wallet address</Text>
+        <Text style={{fontSize: 20, textAlign: 'center'}}>지갑 주소</Text>
         <View style={{marginTop: 10}}>
           <Text style={{fontSize: 17}}>TNDcxm95uDiensNHpfHfn7q5kt2x1vtMfD</Text>
           <View style={{alignItems: 'center', marginTop: 30,}}>
