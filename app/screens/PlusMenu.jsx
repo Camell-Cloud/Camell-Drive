@@ -1,59 +1,61 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, Text, TextInput, StyleSheet, Modal, TouchableWithoutFeedback } from 'react-native';
-import {  MaterialIcons, Foundation } from '@expo/vector-icons';
+import { View, TouchableOpacity, Text, TextInput, StyleSheet, Modal, TouchableWithoutFeedback, Alert } from 'react-native';
+import { MaterialIcons, Foundation } from '@expo/vector-icons';
 import { Colors } from '../theme/color';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 
-
-
-export default function App() {
+export default function PlusMenu({ walletAddress, currentFolder, onMediaUpload }) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isFolderDialogVisible, setIsFolderDialogVisible] = useState(false);
   const [folderName, setFolderName] = useState('');
+
+  const handleSubmit = () => {
+    alert('To be updated.');
+  };
 
   const toggleMenuModal = () => {
     setIsModalVisible(!isModalVisible);
   };
 
-  // 모달 외부를 눌렀을 때 모달을 닫는 함수
   const closeModal = () => {
     setIsModalVisible(false);
   };
 
-  const pickImageFromGallery = async () => {
-    // 갤러리 접근 권한 요청
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      alert('갤러리에 접근하기 위한 권한이 필요합니다.');
+  const createFolder = async () => {
+    if (!walletAddress) {
       return;
     }
-  
-    // 갤러리에서 이미지 선택
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-  
-    if (!result.cancelled) {
-      // 선택된 이미지 처리 (예: 상태 업데이트 또는 업로드)
-      console.log(result.uri);
+
+    let folderNameToCreate = folderName.trim() || 'New Folder';
+
+    const fullPath = currentFolder ? `${currentFolder}/${folderNameToCreate}` : folderNameToCreate;
+    console.log("경로 :", fullPath);
+
+    try {
+      const response = await fetch(`http://13.124.248.7:2005/api/create-folder`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          folderPath: fullPath,
+          walletAddress
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert('The folder was successfully created.');
+        setIsFolderDialogVisible(false);
+        setFolderName('');
+      } else {
+        alert('Failed to create folder: ' + data.error);
+      }
+    } catch (error) {
+      console.error('폴더 생성 오류:', error);
+      alert('Error creating folder.');
     }
-  };
-
-  const toggleFolderDialog = () => {
-    setIsFolderDialogVisible(!isFolderDialogVisible);
-    setIsModalVisible(!isModalVisible);
-
-  };
-
-  const createFolder = () => {
-    console.log("폴더 생성:", folderName);
-    // 폴더 생성 로직 구현
-    setFolderName('');
-    toggleFolderDialog();
   };
 
   const selectDoc = async () => {
@@ -61,14 +63,105 @@ export default function App() {
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*",
       });
-      if (result.type === "success") {
-        console.log(result.uri);
+      if (result.assets[0].uri) {
+        const uri = result.assets[0].uri;
+        const fileName = result.assets[0].name;
+        const mimeType = result.assets[0].mimeType;
+        const formData = new FormData();
+        formData.append('file', {
+          uri,
+          type: mimeType,
+          name: fileName,
+        });
+        formData.append('walletAddress', walletAddress);
+        formData.append('folderPath', currentFolder || '');
+
+        try {
+          const uploadResponse = await fetch('http://13.124.248.7:8080/api/upload', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+            body: formData,
+          });
+          const uploadData = await uploadResponse.json();
+          if (uploadData.success) {
+            Alert.alert('Success', 'File uploaded successfully.');
+            onMediaUpload();
+          } else {
+            console.error('파일 업로드 오류:', uploadData.error);
+            Alert.alert('Failed', `File upload error: ${uploadData.error}`);
+          }
+        } catch (error) {
+          console.error('API 오류:', error);
+          Alert.alert('Failed', 'File upload error.');
+        }
       }
     } catch (err) {
       console.error("Error picking document:", err);
     }
   };
-  
+
+  const uploadMediaFile = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('You need permission to access the gallery.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.cancelled && result.assets && result.assets.length > 0) {
+      const asset = result.assets[0];
+      const uri = asset.uri;
+      const fileName = uri.split('/').pop();
+      const mimeType = asset.type;
+
+      try {
+        const formData = new FormData();
+        formData.append('fileContent', {
+          uri,
+          type: mimeType,
+          name: fileName,
+        });
+        formData.append('walletAddress', walletAddress);
+        formData.append('currentFolder', currentFolder || '');
+        formData.append('fileName', fileName);
+
+        const uploadResponse = await fetch('http://13.124.248.7:2005/api/mediaupload-file', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          body: formData,
+        });
+
+        const uploadData = await uploadResponse.json();
+        if (uploadData.success) {
+          Alert.alert('Success', 'Media file uploaded successfully.');
+          onMediaUpload(); // Refresh media list after successful upload
+        } else {
+          console.error('미디어 파일 업로드 오류:', uploadData.error);
+          Alert.alert('Failed', `Media File Upload Error: ${uploadData.error}`);
+        }
+      } catch (error) {
+        console.error('API 오류:', error);
+        Alert.alert('Failed', 'Media File Upload Error.');
+      }
+    } else {
+      console.log('취소')
+    }
+  };
+
+  const toggleFolderDialog = () => {
+    setIsFolderDialogVisible(!isFolderDialogVisible);
+    setIsModalVisible(!isModalVisible);
+  };
 
   return (
     <View style={styles.container}>
@@ -86,60 +179,58 @@ export default function App() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalMenu}>
               <MenuItem
-                  icon={<MaterialIcons name="note-add" size={22} color="gray" />}
-                  label="파일 업로드"
-                  onPress={ async () => {
-                    await selectDoc();
-                    toggleMenuModal();
-                  }}
-                />
+                icon={<MaterialIcons name="note-add" size={22} color="gray" />}
+                label="Upload file"
+                onPress={async () => {
+                  await selectDoc();
+                  toggleMenuModal();
+                }}
+              />
               <MenuItem
                 icon={<MaterialIcons name="add-photo-alternate" size={24} color="gray" />}
-                label="미디어 업로드"
-                onPress={pickImageFromGallery}
+                label="Upload media"
+                onPress={uploadMediaFile}
               />
               <MenuItem
                 icon={<Foundation name="folder-add" size={22} color="gray" />}
-                label="폴더 생성"
+                label="Create folder"
                 color="black"
                 onPress={toggleFolderDialog}
               />
               <MenuItem
                 icon={<MaterialIcons name="add-a-photo" size={22} color="gray" />}
-                label="사진 촬영"
-                onPress={() => console.log("사진 촬영")}
+                label="Photo shoot"
+                onPress={handleSubmit}
               />
             </View>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
 
-
       <Modal
-
         transparent={true}
         visible={isFolderDialogVisible}
         onRequestClose={toggleFolderDialog}
       >
         <View style={styles.dialogOverlay}>
           <View style={styles.dialog}>
-            <View style={{flex: 1.7,}}>
-              <Text>새 폴더</Text>
+            <View style={{ flex: 1.7 }}>
+              <Text>New Folder</Text>
             </View>
             <TextInput
               style={styles.input}
-              placeholder="제목 없는 폴더"
+              placeholder="Folder name"
               value={folderName}
               onChangeText={setFolderName}
             />
             <View style={styles.dialogButtons}>
-            <TouchableOpacity onPress={createFolder} style={styles.dialogButton}>
-              <Text style={styles.dialogbuttonText}>만들기</Text>
-            </TouchableOpacity>
+              <TouchableOpacity onPress={createFolder} style={styles.dialogButton}>
+                <Text style={styles.dialogbuttonText}>Create</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity onPress={toggleFolderDialog} style={styles.dialogButton}>
-              <Text style={styles.dialogbuttonText}>취소</Text>
-            </TouchableOpacity>
+              <TouchableOpacity onPress={toggleFolderDialog} style={styles.dialogButton}>
+                <Text style={styles.dialogbuttonText}>Cancil</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -185,11 +276,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-
-
     justifyContent: 'flex-end',
-
-    // backgroundColor: 'rgba(0, 0, 0, 0.15)',  // 모달 외부의 반투명 배경
   },
   modalMenu: {
     borderWidth: 0.2,
@@ -215,27 +302,24 @@ const styles = StyleSheet.create({
   },
   dialog: {
     width: '60%',
-    height: '16%',
+    height: '20%',
     backgroundColor: '#fff',
     padding: 20,
     borderRadius: 10,
     alignItems: 'center',
   },
   input: {
-    
     width: '100%',
     borderBottomWidth: 1,
     borderBottomColor: Colors.themcolor,
     marginBottom: 20,
     fontSize: 16,
-    padding: 10,
 
   },
   dialogButtons: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'flex-end',
-
     width: '100%',
   },
   dialogButton: {
