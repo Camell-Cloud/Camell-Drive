@@ -1,4 +1,4 @@
-rootProject.name = 'CamellDrive'
+rootProject.name = 'camelldrive'
 
 dependencyResolutionManagement {
   versionCatalogs {

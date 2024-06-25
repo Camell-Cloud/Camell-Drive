@@ -1,4 +1,4 @@
-package com.anonymous.CamellDrive
+package kr.co.glotn
 
 import android.os.Build
 import android.os.Bundle
