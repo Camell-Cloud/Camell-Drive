@@ -35,7 +35,7 @@ export default function PlusMenu({ walletAddress, currentFolder, onMediaUpload }
     console.log("경로 :", fullPath);
 
     try {
-      const response = await fetch(`http://13.124.248.7:2005/api/create-folder`, {
+      const response = await fetch('http://13.124.248.7:2005/api/create-folder', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -168,7 +168,6 @@ export default function PlusMenu({ walletAddress, currentFolder, onMediaUpload }
   };
   
 
-  //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
   const checkStorageAndUploadMedia = async (uri, fileName, mimeType) => {
     try {
       const response = await fetch(`http://13.124.248.7:2005/api/get-storage-usage?walletAddress=${walletAddress}`);
@@ -237,8 +236,6 @@ export default function PlusMenu({ walletAddress, currentFolder, onMediaUpload }
     }
   };
   
-  
-  // ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 
   const toggleFolderDialog = () => {
     setIsFolderDialogVisible(!isFolderDialogVisible);
