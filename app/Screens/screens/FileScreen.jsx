@@ -233,7 +233,7 @@ const FileScreen = () => {
 
   const renameFile = async () => {
     if (!walletAddress || !fileNameToRename || !newFileName) {
-      Alert.alert('Error', '');
+      Alert.alert('Error', 'Invalid input');
       return;
     }
   
@@ -264,11 +264,11 @@ const FileScreen = () => {
       } catch (jsonError) {
         console.log('JSON 파싱 오류:', jsonError);
         console.log('응답 텍스트:', text);
-        Alert.alert('Error', '');
+        Alert.alert('Error', 'Invalid response');
       }
     } catch (error) {
       console.log('파일 이름 변경 오류:', error);
-      Alert.alert('Error', '');
+      Alert.alert('Error', 'Failed to rename');
     }
   }; 
 
@@ -362,15 +362,14 @@ const FileScreen = () => {
       });
       const data = await response.json();
       if (data.success) {
-        Alert.alert('Successful', isFavorite ? '' : '');
-        fetchFavorites(); // Refresh favorites list
-        fetchFolderContents(); // Refresh folder contents
+        fetchFavorites();
+        fetchFolderContents();
       } else {
         Alert.alert('Error', isFavorite ? `${data.error}` : `${data.error}`);
       }
     } catch (error) {
       console.log(isFavorite ? '즐겨찾기 제거 오류:' : '즐겨찾기 추가 오류:', error);
-      Alert.alert('Error', isFavorite ? '' : '');
+      Alert.alert('Error', isFavorite ? 'Failed to remove from favorites' : 'Failed to add to favorites');
     }
   };  
 
@@ -379,7 +378,12 @@ const FileScreen = () => {
       console.log('지갑 주소가 없습니다.');
       return;
     }
-
+  
+    if (!fileName) {
+      console.log('파일 이름이 없습니다.');
+      return;
+    }
+  
     try {
       const response = await fetch('http://13.124.248.7:8080/api/move-to-trashBin', {
         method: 'POST',
@@ -388,22 +392,36 @@ const FileScreen = () => {
         },
         body: JSON.stringify({
           walletAddress,
-          currentFolder,
+          currentFolder: currentFolder || '', // Ensure currentFolder is not null or undefined
           fileName,
         }),
       });
       const data = await response.json();
       if (data.success) {
-        Alert.alert('Successful', 'Moved to bin');
-        fetchFolderContents(); // Refresh folder contents
+        if (favorites.includes(fileName)) {
+          await fetch('http://13.124.248.7:8080/api/remove-from-favorites', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              walletAddress,
+              currentFolder: currentFolder || '', // Ensure currentFolder is not null or undefined
+              fileName,
+              type: 'file',
+            }),
+          });
+          fetchFavorites();
+        }
+        fetchFolderContents();
       } else {
-        Alert.alert('Error', `${data.error}`);
+        Alert.alert('Error', 'Failed to move to trash');
       }
     } catch (error) {
       console.log('휴지통으로 이동 오류:', error);
-      Alert.alert('Error', '');
+      Alert.alert('Error', 'Failed to move to trash');
     }
-  };
+  };  
 
   const goBack = () => {
     setCurrentFolder(prev => {
@@ -446,7 +464,7 @@ const FileScreen = () => {
             <Ionicons name="share-social" size={25} color="gray" />
             <Text style={styles.selectionButtonText}>Share</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.selectionButton} onPress={handleSubmit}>
+          <TouchableOpacity style={styles.selectionButton} onPress={() => {moveToTrash(selectedFileName); setIsMenuVisible(false);}}>
             <Ionicons name="trash" size={25} color="gray" />
             <Text style={styles.selectionButtonText}>Trash</Text>
           </TouchableOpacity>
@@ -457,7 +475,7 @@ const FileScreen = () => {
         </View>
       )}
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={isShareModalVisible}
         onRequestClose={closeShareModal}
@@ -486,7 +504,7 @@ const FileScreen = () => {
       </Modal>
 
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={isRenameModalVisible}
         onRequestClose={closeRenameModal}
@@ -517,7 +535,7 @@ const FileScreen = () => {
       </Modal>
 
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={isMenuVisible}
         onRequestClose={() => setIsMenuVisible(false)}
@@ -525,11 +543,11 @@ const FileScreen = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Actions for {selectedFileName}</Text>
-            {/* <TouchableOpacity onPress={() => { downloadFile(selectedFileName); setIsMenuVisible(false); }} style={styles.menuItem}> */}
-            <TouchableOpacity onPress={() => { alert('To be Updated...'); setIsMenuVisible(false); }} style={styles.menuItem}>
+            <TouchableOpacity onPress={() => { downloadFile(selectedFileName); setIsMenuVisible(false); }} style={styles.menuItem}>
               <Text style={styles.menuText}>Download</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { showShareModal(); setIsMenuVisible(false); }} style={styles.menuItem}>
+            <TouchableOpacity onPress={() => Alert.alert('To be updated...')} style={styles.menuItem}>
+            {/* <TouchableOpacity onPress={() => { showShareModal(); setIsMenuVisible(false); }} style={styles.menuItem}> */}
               <Text style={styles.menuText}>Share</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => { toggleFavorite(selectedFileName, selectedFileType); setIsMenuVisible(false); }} style={styles.menuItem}>
@@ -538,7 +556,8 @@ const FileScreen = () => {
             <TouchableOpacity onPress={() => { moveToTrash(selectedFileName); setIsMenuVisible(false); }} style={styles.menuItem}>
               <Text style={styles.menuText}>Trash</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { showRenameModal(selectedFileName); setIsMenuVisible(false); }} style={styles.menuItem}>
+            <TouchableOpacity onPress={() => Alert.alert('To be updated...')} style={styles.menuItem}>
+            {/* <TouchableOpacity onPress={() => { showRenameModal(selectedFileName); setIsMenuVisible(false); }} style={styles.menuItem}> */}
               <Text style={styles.menuText}>Rename</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setIsMenuVisible(false)} style={[styles.menuItem, styles.cancelItem]}>

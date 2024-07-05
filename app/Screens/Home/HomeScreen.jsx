@@ -54,7 +54,7 @@ export default function HomeScreen({ navigation }) {
                 console.error('Error fetching wallet address:', data.error);
             }
         } catch (error) {
-            console.error('API error:', error);
+            // console.error('API error:', error);
         }
     }, [user]);
 
@@ -76,7 +76,7 @@ export default function HomeScreen({ navigation }) {
                 console.error('Error fetching storage usage:', errorText);
             }
         } catch (error) {
-            console.error('API error:', error);
+
         }
     }, [walletAddress]);
 
@@ -93,7 +93,7 @@ export default function HomeScreen({ navigation }) {
                 console.error('Error fetching recent items:', data.error);
             }
         } catch (error) {
-            console.error('API error:', error);
+            // console.error('API error:', error);
         }
     }, [walletAddress]);
 
