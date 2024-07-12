@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, Clipboard, Modal, TextInput } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import QRCode from 'react-native-qrcode-svg';
 import SubTabScreenHeader from '../main/SubTabScreenHeader';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
-
+import TransactionModal from './modal/TransactionModal';
+import WalletInfoModal from './modal/WalletinfoModal';
 
 const handleSubmit = () => {
   alert('To be updated');
@@ -19,7 +19,6 @@ const renderItem = ({ item }) => (
       style={styles.profilePic}
     />
     <View style={styles.transactionDetails}>
-
       <View style={styles.addressContainer}>
         <Text style={styles.walletAddress}>
           {item.type === 'deposit' ?
@@ -33,7 +32,6 @@ const renderItem = ({ item }) => (
           <Ionicons name="copy-outline" size={15} color="black" />
         </TouchableOpacity>
       </View>
-
       <Text style={styles.date}>{formatDate(item.timestamp)}</Text>
     </View>
     <Text style={[styles.amount, { color: item.type === 'deposit' ? 'green' : 'red' }]}>
@@ -70,6 +68,7 @@ export default function WalletScreen({ navigation }) {
   const [transactions, setTransactions] = useState([]);
   const [walletAddress, setWalletAddress] = useState(null);
   const [transactionModalVisible, setTransactionModalVisible] = useState(false);
+  const [walletInfoModalVisible, setWalletInfoModalVisible] = useState(false);  // State for wallet info modal
   const [modalType, setModalType] = useState('');
 
   useEffect(() => {
@@ -104,7 +103,7 @@ export default function WalletScreen({ navigation }) {
 
   useEffect(() => {
     if (walletAddress) {
-      axios.get(`http://43.201.64.232:1234/wallet-balance?wallet_address=${walletAddress}`)
+      axios.get(`http://43.201.64.232:1234/wallet-balance?wallet_address=TLbsLtnTs6tMrzotUTAvqV38k6qetR65Bz`)
         .then(response => {
           if (response.data.balance) {
             setBalance(response.data.balance.toString());
@@ -119,7 +118,7 @@ export default function WalletScreen({ navigation }) {
 
   useEffect(() => {
     if (walletAddress) {
-      axios.get(`http://43.201.64.232:1234/wallet-transactions?wallet_address=${walletAddress}`)
+      axios.get(`http://43.201.64.232:1234/wallet-transactions?wallet_address=TLbsLtnTs6tMrzotUTAvqV38k6qetR65Bz`)
         .then(response => {
           if (response.data.transactions) {
             setTransactions(response.data.transactions);
@@ -187,11 +186,11 @@ export default function WalletScreen({ navigation }) {
       </View>
 
       <View style={styles.Mid}>
-        <TouchableOpacity style={styles.OtherButtons} onPress={handleSubmit}>
+        <TouchableOpacity style={styles.OtherButtons} onPress={() => setWalletInfoModalVisible(true)}>
           <Ionicons name="wallet-outline" size={24} color="white" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.OtherButtons} onPress={handleSubmit}>
+        <TouchableOpacity style={styles.OtherButtons} onPress={() => navigation.navigate('ChartScreen')}>
           <Ionicons name="bar-chart-outline" size={24} color="white" />
         </TouchableOpacity>
 
@@ -211,56 +210,19 @@ export default function WalletScreen({ navigation }) {
         />
       </View>
 
-      <Modal
-  animationType="slide"
-  transparent={true}
-  visible={transactionModalVisible}
-  onRequestClose={() => {
-    setTransactionModalVisible(!transactionModalVisible);
-  }}
->
-  <View style={styles.modalView}>
-    <View style={styles.modalTop}>
-      <Text style={styles.modalTitle}>{modalType === 'deposit' ? 'Deposit' : 'Withdraw'}</Text>
-      <TouchableOpacity onPress={() => setTransactionModalVisible(!transactionModalVisible)}
-        title="Close" style={styles.modalCloseButton}>
-        <Text style={styles.closeButton}>x</Text>
-      </TouchableOpacity>
-    </View>
-    {modalType === 'deposit' ? (
-      <View style={styles.withdrawContent}>
-      {walletAddress && <QRCode value={walletAddress} size={150} />}
-      <Text style={styles.walletAddressText2}>Wallet address</Text>
-      <Text style={styles.walletAddressText}>{walletAddress}</Text>
-      <TouchableOpacity onPress={() => copyToClipboard(walletAddress)} style={styles.copyButton}>
-        <Ionicons name="copy-outline" size={20} color="white" />
-        <Text style={styles.copyButtonText}>Copy Address</Text>
-      </TouchableOpacity>
-    </View>
-    ) : (
-      <View style={styles.depositContent}>
-        <Text style={styles.withrawTitle}>Amount of withdrawal</Text>
-        <TextInput 
-          style={styles.input} 
-          placeholder="Enter amount" 
-          keyboardType="numeric"
-        />
-        <Text style={styles.withrawTitle}>Wallet address</Text>
-        <TextInput 
-          style={styles.input} 
-          placeholder="Enter address" 
-        />
-        <Text style={styles.withrawTitle}>Network</Text>
-        <View style={styles.NetworkView}>
-          <Text style={styles.networkText}>Tron</Text>
-        </View>
-      <TouchableOpacity style={styles.confirmButton} onPress={() => alert('To be updated')}>
-        <Text style={styles.confirmButtonText}>Confirm</Text>
-      </TouchableOpacity>
-    </View>
-    )}
-  </View>
-</Modal>
+      <TransactionModal
+        modalType={modalType}
+        visible={transactionModalVisible}
+        onClose={() => setTransactionModalVisible(false)}
+        walletAddress={walletAddress}
+        copyToClipboard={copyToClipboard}
+      />
+
+      <WalletInfoModal
+        visible={walletInfoModalVisible}
+        onClose={() => setWalletInfoModalVisible(false)}
+        walletAddress={walletAddress}
+      />
 
     </View>
   );
@@ -411,111 +373,5 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: 'gray',
-  },
-  modalView: {
-    position: 'absolute',
-    height: "62%",
-    bottom: 0,
-    width: '100%',
-    backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 10,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 17,
-  },
-  modalTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalCloseButton: {
-    position: 'absolute',
-    right: -150,
-    padding: 10,
-    alignItems: 'center',
-  },
-  withdrawContent: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  walletAddressText: {
-    position: 'absolute',
-    bottom: -100,
-    fontSize: 16,
-    marginVertical: 10,
-    backgroundColor: "#ffebf0",
-    padding: 3,
-  },
-  walletAddressText2: {
-    position: 'absolute',
-    bottom: -70,
-    fontSize: 18,
-    marginVertical: 10,
-  },
-  copyButton: {
-    position: 'absolute',
-    bottom: -150,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#e87894',
-    borderRadius: 5,
-  },
-  copyButtonText: {
-    marginLeft: 5,
-    color: 'white',
-  },
-  depositContent: {
-    alignItems: 'center',
-    marginTop: 20,
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 20,
-    width: '80%',
-    paddingHorizontal: 10,
-  },
-  confirmButton: {
-    backgroundColor: '#e87894',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginTop: 40,
-  },
-  confirmButtonText: {
-    color: 'white',
-    fontSize: 16,
-  },
-  NetworkView: {
-    backgroundColor: "#ffebf0",
-    width: '81%',
-    padding: 7,
-  },
-  networkText: {
-    fontSize: 20,
-  },
-  withrawTitle: {
-    textAlign: 'left',
-    fontSize: 15,
-    width: '81%',
-    marginBottom: 3,
-  },
-  closeButton: {
-    fontSize: 20,
   }
 });
