@@ -67,12 +67,19 @@ export default function WalletScreen({ navigation }) {
   const [balance, setBalance] = useState('0.0');
   const [transactions, setTransactions] = useState([]);
   const [walletAddress, setWalletAddress] = useState(null);
+  const [privateKey, setPrivateKey] = useState(null);
   const [transactionModalVisible, setTransactionModalVisible] = useState(false);
-  const [walletInfoModalVisible, setWalletInfoModalVisible] = useState(false);  // State for wallet info modal
+  const [walletInfoModalVisible, setWalletInfoModalVisible] = useState(false);
   const [modalType, setModalType] = useState('');
+  const [TrxBalance, setTrxBalance] = useState(null);
+  const [isBalanceHidden, setIsBalanceHidden] = useState(false); // 잔액 숨김 상태 변수
+
+  const toggleBalanceVisibility = () => {
+    setIsBalanceHidden(!isBalanceHidden);
+  };
 
   useEffect(() => {
-    const fetchWalletAddress = async () => {
+    const fetchWalletInfo = async () => {
       const email = await AsyncStorage.getItem('userEmail');
       if (!email) {
         console.error('No email found in storage');
@@ -80,30 +87,69 @@ export default function WalletScreen({ navigation }) {
       }
 
       try {
-        const response = await fetch('http://13.124.248.7:8080/api/get-wallet-address', {
+        // Fetch wallet address
+        const addressResponse = await fetch('http://13.124.248.7:8080/api/get-wallet-address', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ email }),
         });
-        const data = await response.json();
-        if (data.success) {
-          setWalletAddress(data.address);
+        const addressData = await addressResponse.json();
+        if (addressData.success) {
+          setWalletAddress(addressData.address);
         } else {
-          console.error('Error fetching wallet address:', data.error);
+          console.error('Error fetching wallet address:', addressData.error);
+        }
+
+        // Fetch private key
+        const privateKeyResponse = await fetch('http://13.124.248.7:8080/api/get-private-key', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        });
+        const privateKeyData = await privateKeyResponse.json();
+        if (privateKeyData.success) {
+          setPrivateKey(privateKeyData.privateKey);
+        } else {
+          console.error('Error fetching private key:', privateKeyData.error);
         }
       } catch (error) {
         console.error('API error:', error);
       }
     };
 
-    fetchWalletAddress();
+    fetchWalletInfo();
   }, []);
 
   useEffect(() => {
     if (walletAddress) {
-      axios.get(`http://43.201.64.232:1234/wallet-balance?wallet_address=TLbsLtnTs6tMrzotUTAvqV38k6qetR65Bz`)
+      axios.get(`http://43.201.64.232:1212/wallet-trx-balance?wallet_address=${walletAddress}`)
+        .then(response => {
+          if (response.data.trx_balance) {
+            const trxBalanceValue = Math.floor(response.data.trx_balance); // 소수점 제거
+            const units = calculateUnits(trxBalanceValue);
+            setTrxBalance(
+              <Text style={{ color: 'white' }}>
+                {isBalanceHidden ? '*** TRX' : `${trxBalanceValue} TRX`} (
+                <Text style={{ color: 'white' }}>{isBalanceHidden ? '*' : units}</Text> transfers allowed)
+              </Text>
+            );
+          } else if (response.data.error) {
+            console.error(response.data.error);
+          }
+        })
+        .catch(error => {
+          console.log("TRX 잔액을 불러오는데 실패했습니다.:", error);
+        });
+    }
+  }, [walletAddress, isBalanceHidden]);
+
+  useEffect(() => {
+    if (walletAddress) {
+      axios.get(`http://43.201.64.232:1234/wallet-balance?wallet_address=${walletAddress}`)
         .then(response => {
           if (response.data.balance) {
             setBalance(response.data.balance.toString());
@@ -118,7 +164,7 @@ export default function WalletScreen({ navigation }) {
 
   useEffect(() => {
     if (walletAddress) {
-      axios.get(`http://43.201.64.232:1234/wallet-transactions?wallet_address=TLbsLtnTs6tMrzotUTAvqV38k6qetR65Bz`)
+      axios.get(`http://43.201.64.232:1234/wallet-transactions?wallet_address=${walletAddress}`)
         .then(response => {
           if (response.data.transactions) {
             setTransactions(response.data.transactions);
@@ -130,6 +176,10 @@ export default function WalletScreen({ navigation }) {
         });
     }
   }, [walletAddress]);
+
+  const calculateUnits = (trx_balance) => {
+    return Math.floor(trx_balance / 13);
+  };
 
   const handleModal = (type) => {
     setModalType(type);
@@ -150,18 +200,23 @@ export default function WalletScreen({ navigation }) {
               <Text style={styles.CAMT}>Camell Wallet</Text>
             </View>
 
-            <TouchableOpacity onPress={handleSubmit}>
-              <Ionicons name="eye" size={18} color="#fff" />
+            <TouchableOpacity onPress={toggleBalanceVisibility}>
+              <Ionicons name={isBalanceHidden ? "eye-off" : "eye"} size={18} color="#fff" />
             </TouchableOpacity>
+          </View>
+          <View style={styles.Balancetopandmid}>
+            <Text style={{
+              color: 'rgba(255, 255, 255, 0.7)',
+            }}>{isBalanceHidden ? '****' : '0.0'}$</Text>
           </View>
 
           <View style={styles.BalanceMid}>
-            <Text style={styles.BalanceValue}>{parseFloat(balance).toLocaleString('ko-KR')}</Text>
+            <Text style={styles.BalanceValue}>{isBalanceHidden ? '****' : parseFloat(balance).toLocaleString('ko-KR')}</Text>
             <Text style={styles.CAMT}>CAMT</Text>
           </View>
 
           <View style={styles.BalanceBottom}>
-            <Text style={styles.CAMTAmount}>$0.0</Text>
+            <Text style={styles.TRX}>{TrxBalance}</Text>
             <View style={styles.Volatility}>
               <Text style={{
                 fontSize: 12,
@@ -216,6 +271,7 @@ export default function WalletScreen({ navigation }) {
         onClose={() => setTransactionModalVisible(false)}
         walletAddress={walletAddress}
         copyToClipboard={copyToClipboard}
+        privateKey={privateKey} // privateKey prop 추가
       />
 
       <WalletInfoModal
@@ -287,17 +343,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  Balancetopandmid: {
+    backgroundColor: '#e87894',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
   BalanceBottom: {
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     alignItems: 'center',
     flexDirection: 'row',
     flex: 1.3,
     backgroundColor: '#e87894'
   },
-  CAMTAmount: {
-    color: 'rgba(255, 255, 255, 0.7)',
+
+  TRX: {
+    color: 'rgba(255, 255, 255, 0.85)',
     alignSelf: 'center',
     justifyContent: 'center',
+    fontSize: 12,
+    left: 12,
   },
   BalanceValue: {
     marginRight: 10,
@@ -314,7 +378,6 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   Volatility: {
-    position: 'absolute',
     right: 12,
   },
   OtherButtons: {
