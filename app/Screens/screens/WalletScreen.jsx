@@ -6,7 +6,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
 import TransactionModal from './modal/TransactionModal';
-import WalletInfoModal from './modal/WalletinfoModal';
+import WalletInfoModal from './modal/WalletInfoModal';
 
 const handleSubmit = () => {
   alert('To be updated');
@@ -50,6 +50,12 @@ const renderEmptyComponent = () => (
   </View>
 );
 
+const calculatePercentageChange = (open, close) => {
+  const change = ((close - open) / open) * 100;
+  return change.toFixed(2);
+};
+
+
 const formatDate = (timestamp) => {
   const date = new Date(timestamp);
   const options = {
@@ -73,10 +79,45 @@ export default function WalletScreen({ navigation }) {
   const [modalType, setModalType] = useState('');
   const [TrxBalance, setTrxBalance] = useState(null);
   const [isBalanceHidden, setIsBalanceHidden] = useState(false); // 잔액 숨김 상태 변수
+  const [closePrice, setClosePrice] = useState(null);
+  const [openPrice, setOpenPrice] = useState(null);
+
+
 
   const toggleBalanceVisibility = () => {
     setIsBalanceHidden(!isBalanceHidden);
   };
+
+  const calculateTotalBalance = (balance, closePrice) => {
+    const totalBalance = (parseFloat(balance) * closePrice).toFixed(0);
+    return parseFloat(totalBalance).toLocaleString('ko-KR');
+  };
+  
+  
+  
+
+  useEffect(() => {
+    fetch('http://43.201.64.232:5000/gopax')
+      .then(response => response.json())
+      .then(data => {
+        if (data && data.body) {
+          setClosePrice(data.body.close);
+        }
+      })
+      .catch(error => console.error('Error fetching data:', error));
+  }, []);
+
+  useEffect(() => {
+    fetch('http://43.201.64.232:5000/gopax')
+      .then(response => response.json())
+      .then(data => {
+        if (data && data.body) {
+          setClosePrice(data.body.close);
+          setOpenPrice(data.body.open);
+        }
+      })
+      .catch(error => console.error('Error fetching data:', error));
+  }, []);
 
   useEffect(() => {
     const fetchWalletInfo = async () => {
@@ -207,7 +248,9 @@ export default function WalletScreen({ navigation }) {
           <View style={styles.Balancetopandmid}>
             <Text style={{
               color: 'rgba(255, 255, 255, 0.7)',
-            }}>{isBalanceHidden ? '****' : '0.0'}$</Text>
+            }}>
+            {isBalanceHidden ? '****' : `₩${calculateTotalBalance(balance, closePrice)}`}
+            </Text>
           </View>
 
           <View style={styles.BalanceMid}>
@@ -221,9 +264,12 @@ export default function WalletScreen({ navigation }) {
               <Text style={{
                 fontSize: 12,
                 textAlign: 'center',
-                color: '#5af250',
-              }}>+ 0%</Text>
+                color: closePrice >= openPrice ? '#5af250' : '#a32100',
+              }}>
+                {closePrice >= openPrice ? '+' : ''}{calculatePercentageChange(openPrice, closePrice)}%
+              </Text>
             </View>
+
           </View>
         </View>
 
