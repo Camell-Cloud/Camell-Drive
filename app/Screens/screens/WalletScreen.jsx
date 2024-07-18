@@ -324,6 +324,8 @@ export default function WalletScreen({ navigation }) {
         visible={walletInfoModalVisible}
         onClose={() => setWalletInfoModalVisible(false)}
         walletAddress={walletAddress}
+        copyToClipboard={copyToClipboard}
+        privateKey={privateKey} // privateKey prop 추가
       />
 
     </View>

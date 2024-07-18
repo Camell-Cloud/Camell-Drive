@@ -1,8 +1,9 @@
 // WalletInfoModal.js
 import React from 'react';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 
-const WalletInfoModal = ({ visible, onClose, walletAddress }) => {
+const WalletInfoModal = ({ visible, onClose, walletAddress, copyToClipboard, privateKey}) => {
   return (
     <Modal
       animationType="slide"
@@ -14,12 +15,38 @@ const WalletInfoModal = ({ visible, onClose, walletAddress }) => {
         <View style={styles.modalTop}>
           <Text style={styles.modalTitle}>Wallet details</Text>
           <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
-            <Text style={styles.closeButton}>x</Text>
+        <Text style={styles.closeButton}>x</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.content}>
-            <Text>asdf</Text>
+
+        <View style={styles.contentContainer}>
+            <Text style={styles.contentTitle}>Wallet Address</Text>
+            <TouchableOpacity onPress={() => copyToClipboard(walletAddress)} style={styles.contentValueContainer}>
+                <Text style={styles.contentValue}>{walletAddress}</Text>
+            </TouchableOpacity>
         </View>
+
+        <View style={styles.contentContainer}>
+            <Text style={styles.contentTitle}>Private Key</Text>
+            <TouchableOpacity onPress={() => copyToClipboard(privateKey)} style={styles.contentValueContainer}>
+                <Text style={styles.contentValue}>{privateKey}</Text>
+            </TouchableOpacity>
+        </View>
+
+        <View style={styles.contentContainer}>
+            <Text style={styles.contentTitle}>Wallet Type</Text>
+            <View style={styles.contentValueContainer}>
+                <Text style={styles.contentValue}>TronLink</Text>
+            </View>
+        </View>
+
+        <View style={styles.contentContainer}>
+            <Text style={styles.contentTitle}>Network</Text>
+            <View style={styles.contentValueContainer}>
+                <Text style={styles.contentValue}>Tron</Text>
+            </View>
+        </View>
+        
       </View>
     </Modal>
   );
@@ -59,12 +86,6 @@ const styles = StyleSheet.create({
     padding: 10,
     alignItems: 'center',
   },
-  content: {
-    alignItems: 'center',
-    marginTop: 20,
-    padding: 5,
-    backgroundColor: 'red'
-  },
   closeButton: {
     fontSize: 20,
     position: 'absolute',
@@ -72,6 +93,21 @@ const styles = StyleSheet.create({
     top: -14,
     padding: 10,
   },
+
+  contentContainer: {
+    margin: 7,
+    padding: 5,
+    width: '80%',
+  },
+  contentTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  contentValueContainer: {
+    backgroundColor: 'rgba(217,217,217,0.5)',
+    marginTop: 5,
+    padding: 7
+  }
 });
 
 export default WalletInfoModal;
