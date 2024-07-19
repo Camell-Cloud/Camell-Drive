@@ -318,6 +318,62 @@ export default function WalletScreen({ navigation }) {
         walletAddress={walletAddress}
         copyToClipboard={copyToClipboard}
         privateKey={privateKey} // privateKey prop 추가
+        fetchWalletData={() => {
+          // 모든 요청 다시 불러오기
+          axios.get(`http://43.201.64.232:1234/wallet-balance?wallet_address=${walletAddress}`)
+            .then(response => {
+              if (response.data.balance) {
+                setBalance(response.data.balance.toString());
+              } else if (response.data.error) {
+                console.error(response.data.error);
+              }
+            })
+            .catch(error => {
+              console.log("잔액을 불러오는데 실패했습니다.:", error);
+            });
+      
+          axios.get(`http://43.201.64.232:1234/wallet-transactions?wallet_address=${walletAddress}`)
+            .then(response => {
+              if (response.data.transactions) {
+                setTransactions(response.data.transactions);
+              } else if (response.data.error) {
+                console.error(response.data.error);
+              }
+            })
+            .catch(error => {
+              console.error("Failed to fetch transactions:", error);
+            });
+      
+          // 추가로 필요한 다른 데이터 요청
+          axios.get(`http://43.201.64.232:1212/wallet-trx-balance?wallet_address=${walletAddress}`)
+            .then(response => {
+              if (response.data.trx_balance) {
+                const trxBalanceValue = Math.floor(response.data.trx_balance); // 소수점 제거
+                const units = calculateUnits(trxBalanceValue);
+                setTrxBalance(
+                  <Text style={{ color: 'white' }}>
+                    {isBalanceHidden ? '*** TRX' : `${trxBalanceValue} TRX`} (
+                    <Text style={{ color: 'white' }}>{isBalanceHidden ? '*' : units}</Text> transfers allowed)
+                  </Text>
+                );
+              } else if (response.data.error) {
+                console.error(response.data.error);
+              }
+            })
+            .catch(error => {
+              console.log("TRX 잔액을 불러오는데 실패했습니다.:", error);
+            });
+      
+          fetch('http://43.201.64.232:5000/gopax')
+            .then(response => response.json())
+            .then(data => {
+              if (data && data.body) {
+                setClosePrice(data.body.close);
+                setOpenPrice(data.body.open);
+              }
+            })
+            .catch(error => console.error('Error fetching data:', error));
+        }}
       />
 
       <WalletInfoModal
