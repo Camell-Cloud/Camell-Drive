@@ -4,33 +4,43 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import QRCode from 'react-native-qrcode-svg';
 import axios from 'axios';
 
-const TransactionModal = ({ modalType, visible, onClose, walletAddress, copyToClipboard }) => {
+const TransactionModal = ({ modalType, visible, onClose, walletAddress, copyToClipboard, privateKey, fetchWalletData }) => {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawAddress, setWithdrawAddress] = useState('');
 
   const handleWithdraw = async () => {
-    if (!withdrawAmount || !withdrawAddress) {
-      Alert.alert('Error', 'Please enter all fields.');
-      return;
-    }
+  if (!withdrawAmount || !withdrawAddress) {
+    Alert.alert('Error', 'Please enter all fields.');
+    return;
+  }
 
-    try {
-      const response = await axios.post('http://43.201.64.232:3000/send-transaction', {
-        to: withdrawAddress,
-        amount: withdrawAmount,
-      });
+  try {
+    const response = await axios.post('http://43.201.64.232:3000/send-transaction', {
+      to: withdrawAddress,
+      amount: withdrawAmount,
+      privateKey: privateKey  // 개인키 전달
+    });
 
-      if (response.data.result) {
-        Alert.alert('Success', 'Transaction sent successfully!');
-        onClose(); // 모달 닫기
-      } else {
-        Alert.alert('Error', 'Transaction failed.');
-      }
-    } catch (error) {
-      console.error('Transaction error:', error);
-      Alert.alert('Error', `Transaction error: ${error.message}`);
+    if (response.data.result) {
+      Alert.alert('Success', 'Transaction sent successfully!');
+      onClose(); // 모달 닫기
+      setTimeout(() => {
+        fetchWalletData(); // 데이터 다시 불러오기
+      }, 5000); // 5초 후에 데이터 다시 불러오기
+    } else {
+      Alert.alert('Success', 'Transaction sent successfully!');
+      onClose(); // 모달 닫기
+      setTimeout(() => {
+        fetchWalletData(); // 데이터 다시 불러오기
+      }, 5000); // 5초 후에 데이터 다시 불러오기
     }
-  };
+  } catch (error) {
+    console.error('Transaction error:', error);
+    Alert.alert('Error', `Transaction error: ${error.message}`);
+  }
+};
+
+  
 
   return (
     <Modal

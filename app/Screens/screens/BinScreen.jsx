@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Alert } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Colors } from '../Utils/colors';
@@ -133,12 +133,12 @@ const BinScreen = () => {
   const restoreFile = async () => {
     if (!selectedFile) return;
     try {
-      const response = await fetch('http://13.124.248.7:8080/api/restore-file', {
+      const response = await fetch('http://13.124.248.7:8080/api/retrieve', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ walletAddress, fileKey: selectedFile.key }),
+        body: JSON.stringify({ walletAddress, currentFolder: '', fileName: selectedFile.key }),
       });
 
       const responseData = await response.text(); // Fetch response as text
@@ -275,7 +275,6 @@ const BinScreen = () => {
                 )}
                 <Text style={styles.modalFileName}>{selectedFile.key}</Text>
                 <Text style={styles.modalFileSize}>Size: {formatSize(selectedFile.size)}</Text>
-                <Text style={styles.modalFileAdded}>Added: {selectedFile.addedDate ? selectedFile.addedDate.toLocaleDateString() : 'N/A'}</Text>
                 <Text style={styles.modalExpiration}>Expires: {selectedFile.expirationDate ? selectedFile.expirationDate.toLocaleDateString() : 'N/A'}</Text>
               </View>
               <View style={styles.buttonRow}>
