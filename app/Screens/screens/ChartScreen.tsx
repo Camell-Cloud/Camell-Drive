@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet,Image, Dimensions, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { CandlestickChart } from 'react-native-wagmi-charts';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
@@ -12,31 +12,36 @@ const ChartScreen = () => {
   const [currentTime, setCurrentTime] = useState(null);
 
   useEffect(() => {
-    fetch('http://43.201.64.232:5000/gopax-chart')
-      .then(response => response.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          const formattedData = data.map(item => ({
-            timestamp: new Date(item[0]).getTime(),
-            open: item[3],
-            close: item[4],
-            high: item[2],
-            low: item[1],
-          }));
-          setChartData(formattedData);
-          setCurrentPrice(formattedData[formattedData.length - 1].close);
-          setCurrentTime(new Date(formattedData[formattedData.length - 1].timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }));
-          setLoading(false);
-        } else {
-          console.error('Error: Data is not an array', data);
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching chart data:', error);
-        setLoading(false);
-      });
+    fetchChartData();
   }, []);
-  
+
+  const fetchChartData = async () => {
+    try {
+      const response = await fetch('http://43.201.64.232:5000/gopax-chart');
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        const formattedData = data.map(item => ({
+          timestamp: new Date(item[0]).getTime(),
+          open: item[3],
+          close: item[4],
+          high: item[2],
+          low: item[1],
+        }));
+        setChartData(formattedData);
+        const latestData = formattedData[formattedData.length - 1];
+        setCurrentPrice(latestData.close);
+        setCurrentTime(new Date(latestData.timestamp).toLocaleTimeString('en-US', {
+          hour: '2-digit', minute: '2-digit', hour12: true,
+        }));
+      } else {
+        console.error('Error: Data is not an array', data);
+      }
+    } catch (error) {
+      console.error('Error fetching chart data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -57,14 +62,10 @@ const ChartScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-
         <TouchableOpacity onPress={() => navigation.navigate('Wallet')} style={styles.backButton}>
           <Ionicons name="arrow-back" size={36} color="black" />
         </TouchableOpacity>
-          <Image
-            source={require('../../../assets/images/coin.png')}
-            style={styles.logo}
-          />
+        <Image source={require('../../../assets/images/coin.png')} style={styles.logo} />
         <View style={styles.titleContainer}>
           <Text style={styles.title}>CAMT / KRW</Text>
           <Text style={styles.subTitle}>{currentPrice ? currentPrice.toLocaleString() : 'N/A'}</Text>
@@ -75,24 +76,24 @@ const ChartScreen = () => {
         <CandlestickChart.Provider data={chartData}>
           <CandlestickChart height={Dimensions.get('window').height - 300} width={Dimensions.get('window').width}>
             <CandlestickChart.Candles positiveColor="green" negativeColor="red" />
-            <CandlestickChart.Crosshair color='black'>
+            <CandlestickChart.Crosshair color="black">
               <CandlestickChart.Tooltip />
             </CandlestickChart.Crosshair>
           </CandlestickChart>
           <CandlestickChart.DatetimeText
-              locale="en-US"
-              options={{
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true,
-              }}
-            />
+            locale="en-US"
+            options={{
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true,
+            }}
+          />
         </CandlestickChart.Provider>
       </View>
-        <View style={styles.currentDataContainer}>
-          <Text style={{fontSize: 16}}>The following are Gopax's price data, from one day ago until now, in 30-minute intervals.</Text>
+      <View style={styles.currentDataContainer}>
+        <Text style={{ fontSize: 16 }}>The following are Gopax's price data, from one day ago until now, in 30-minute intervals.</Text>
       </View>
     </View>
   );
@@ -103,16 +104,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    justifyContent: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
     backgroundColor: '#f5f5f5',
-    borderBottomWidth: 0.2
+    borderBottomWidth: 0.2,
   },
   titleContainer: {
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   title: {
     fontSize: 14,
@@ -161,10 +161,10 @@ const styles = StyleSheet.create({
     height: 40,
   },
   backButton: {
-    position: 'absolute', 
+    position: 'absolute',
     left: 1,
-    color: 'black'
-  }
+    color: 'black',
+  },
 });
 
 export default ChartScreen;
