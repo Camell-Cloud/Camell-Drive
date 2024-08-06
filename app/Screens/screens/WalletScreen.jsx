@@ -504,8 +504,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 10,
-    borderBottomWidth: 0.2,
-    borderBottomColor: '#000',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
     marginTop: 8,
   },
   transactionDetails: {
