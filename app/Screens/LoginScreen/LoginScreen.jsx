@@ -1,51 +1,62 @@
 import { View, Text, Image, StyleSheet, TouchableOpacity, Platform, Alert } from 'react-native';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { defaultStyles } from '../Utils/Styles';
 import * as WebBrowser from 'expo-web-browser';
 import { useWarmUpBrowser } from '../../hooks/useWarmUpBrowser';
 import { useOAuth } from '@clerk/clerk-expo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Linking from 'expo-linking';
+import { v4 as uuidv4 } from 'uuid';
+import 'react-native-get-random-values';
 
 WebBrowser.maybeCompleteAuthSession();
 
 const LoginScreen = () => {
     useWarmUpBrowser();
+    const redirectUrl = Linking.createURL('/');
+    const { startOAuthFlow } = useOAuth({ strategy: "oauth_google", redirectUrl });
 
-    const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
-
-    const onGooglePress = React.useCallback(async () => {
+    const onGooglePress = useCallback(async () => {
         try {
-            const { createdSessionId, signIn, signUp, setActive } =
-                await startOAuthFlow();
-
-                if (createdSessionId) {
-                    setActive({ session: createdSessionId });
-                    const email = signUp?.emailAddress || signIn?.emailAddress;
-                    if (email) {
-                        const response = await fetch('http://13.124.248.7:8080/api/create-wallet', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ email }),
-                        });
-                        const data = await response.json();
-                        if (data.success) {
-                            console.log('Wallet created with address: ', data.walletAddress);
-                            await AsyncStorage.setItem('userEmail', email);
-                            await AsyncStorage.setItem('isLoggedIn', 'true');
-                            console.log('Email: ', email);
-                        } else {
-                            console.error('Failed to create wallet', data.error);
-                        }
-                    } else {
-                        // Just go in
-                    }
-                }
+            console.log("Starting OAuth flow...");
+            const { createdSessionId, signIn, signUp, setActive } = await startOAuthFlow();
+            console.log("OAuth flow completed", { createdSessionId, signIn, signUp });
+    
+            // 여러 위치에서 이메일 정보 시도
+            const email = signUp?.emailAddress || signIn?.userData?.email_address || signIn?.userData?.email || signIn?.emailAddress || null;
+    
+            if (email) {
+                const uuid = uuidv4();
+                const s3FolderName = `user-${uuid}`;
+                await AsyncStorage.setItem('userEmail', email);
+                await AsyncStorage.setItem('uuid', uuid);
+                await AsyncStorage.setItem('s3FolderName', s3FolderName);
+                await AsyncStorage.setItem('isLoggedIn', 'true');
+    
+                // 백엔드로 데이터 전송
+                await fetch('https://your-backend-url/api/save-user-data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, uuid, s3FolderName }),
+                });
+    
+                console.log('Email, UUID, and S3 Folder Name stored and sent to backend:', email, uuid, s3FolderName);
+            } else {
+                console.log('No email retrieved, but login successful');
+                await AsyncStorage.setItem('isLoggedIn', 'false');
+            }
+    
+            const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
+            console.log("isLoggedIn after login:", isLoggedIn);
+    
         } catch (err) {
             console.error("OAuth error", err);
         }
-    }, []);
+    }, [startOAuthFlow]);
+    
+    
 
     return (
         <View style={defaultStyles.container}>
