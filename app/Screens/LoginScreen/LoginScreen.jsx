@@ -1,62 +1,47 @@
 import { View, Text, Image, StyleSheet, TouchableOpacity, Platform, Alert } from 'react-native';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { defaultStyles } from '../Utils/Styles';
 import * as WebBrowser from 'expo-web-browser';
-import { useWarmUpBrowser } from '../../hooks/useWarmUpBrowser';
-import { useOAuth } from '@clerk/clerk-expo';
+import * as Google from 'expo-auth-session/providers/google';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Linking from 'expo-linking';
-import { v4 as uuidv4 } from 'uuid';
-import 'react-native-get-random-values';
 
 WebBrowser.maybeCompleteAuthSession();
 
 const LoginScreen = () => {
-    useWarmUpBrowser();
-    const redirectUrl = Linking.createURL('/');
-    const { startOAuthFlow } = useOAuth({ strategy: "oauth_google", redirectUrl });
+    const [userInfo, setUserInfo] = React.useState(null);
+    const [request, response, promptAsync] = Google.useAuthRequest({
+        androidClientId: '743275751573-gt78qf9t6l7abq6hevffofjnebgf54dl.apps.googleusercontent.com'
+    });
 
-    const onGooglePress = useCallback(async () => {
-        try {
-            console.log("Starting OAuth flow...");
-            const { createdSessionId, signIn, signUp, setActive } = await startOAuthFlow();
-            console.log("OAuth flow completed", { createdSessionId, signIn, signUp });
-    
-            // 여러 위치에서 이메일 정보 시도
-            const email = signUp?.emailAddress || signIn?.userData?.email_address || signIn?.userData?.email || signIn?.emailAddress || null;
-    
-            if (email) {
-                const uuid = uuidv4();
-                const s3FolderName = `user-${uuid}`;
-                await AsyncStorage.setItem('userEmail', email);
-                await AsyncStorage.setItem('uuid', uuid);
-                await AsyncStorage.setItem('s3FolderName', s3FolderName);
-                await AsyncStorage.setItem('isLoggedIn', 'true');
-    
-                // 백엔드로 데이터 전송
-                await fetch('https://your-backend-url/api/save-user-data', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ email, uuid, s3FolderName }),
-                });
-    
-                console.log('Email, UUID, and S3 Folder Name stored and sent to backend:', email, uuid, s3FolderName);
-            } else {
-                console.log('No email retrieved, but login successful');
-                await AsyncStorage.setItem('isLoggedIn', 'false');
-            }
-    
-            const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
-            console.log("isLoggedIn after login:", isLoggedIn);
-    
-        } catch (err) {
-            console.error("OAuth error", err);
+    React.useEffect(() => {
+        if (response?.type === 'success') {
+            const { authentication } = response;
+            getUserInfo(authentication.accessToken);
         }
-    }, [startOAuthFlow]);
-    
-    
+    }, [response]);
+
+    async function getUserInfo(token) {
+        if (!token) return;
+        try {
+            const response = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            const user = await response.json();
+            if (user.email) {
+                await AsyncStorage.setItem('userEmail', user.email);
+                await AsyncStorage.setItem('@user', JSON.stringify(user));
+                console.log('User info saved:', user);
+                setUserInfo(user);
+                console.log('User email saved:', user.email);
+            } else {
+                console.error('Failed to retrieve email');
+            }
+        } catch (error) {
+            console.error('Error fetching user info:', error);
+        }
+    }
 
     return (
         <View style={defaultStyles.container}>
@@ -77,7 +62,7 @@ const LoginScreen = () => {
                     marginTop: 20,
                     backgroundColor: '#E1E4EC'
                 }]}
-                onPress={onGooglePress}
+                onPress={() => promptAsync()}
             >
                 <Image
                     source={require('../../../assets/icons/google-icon.png')}
