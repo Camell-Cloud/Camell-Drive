@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Image, Clipboard } from 'react-native';
+import { Modal, View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Image, Clipboard, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { FontAwesome } from '@expo/vector-icons';
-import { useUser } from '@clerk/clerk-expo';
+import { useUser, useAuth } from '@clerk/clerk-expo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
@@ -14,6 +14,7 @@ const ProfileModal = ({ visible, onClose, navigation }) => {
   const [userPhoto, setUserPhoto] = useState(null);
   const [userEmail, setUserEmail] = useState('');
   const { user } = useUser();
+  const { signOut } = useAuth();
   const [balance, setBalance] = useState('0.0');
   const [walletAddress, setWalletAddress] = useState('');
 
@@ -97,6 +98,35 @@ const ProfileModal = ({ visible, onClose, navigation }) => {
     }
   };
 
+  const handleLogout = async () => {
+    Alert.alert(
+      "Logout",
+      "Do you want to log out?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Logout cancelled"),
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          onPress: async () => {
+            try {
+              await signOut();
+              await AsyncStorage.removeItem('userEmail');
+              await AsyncStorage.removeItem('sessionId');
+              await AsyncStorage.setItem('isLoggedIn', 'false');
+              onClose(); // Close the modal after logout
+            } catch (error) {
+              console.error('Failed to sign out', error);
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
   useEffect(() => {
     if (user && user.primaryEmailAddress && user.imageUrl) {
       const currentUser = user.primaryEmailAddress.emailAddress;
@@ -140,11 +170,11 @@ const ProfileModal = ({ visible, onClose, navigation }) => {
               <Text style={styles.emailText}>{userEmail}</Text>
               <Text style={{ color: 'green', fontSize: 12, marginRight: 10, }}>Connected</Text>
             </View>
-              <View style={styles.wallet}>
-                <Text style={{ fontWeight: 'bold' }}>
-                  {parseFloat(balance).toLocaleString('ko-KR')} CAMT
-                </Text>
-              </View>
+            <View style={styles.wallet}>
+              <Text style={{ fontWeight: 'bold' }}>
+                {parseFloat(balance).toLocaleString('ko-KR')} CAMT
+              </Text>
+            </View>
           </View>
 
           <View style={styles.body}>
@@ -159,6 +189,10 @@ const ProfileModal = ({ visible, onClose, navigation }) => {
             <TouchableOpacity style={styles.menu} onPress={handleSubmit}>
               <FontAwesome name="cog" size={20} color="#828282" />
               <Text style={styles.menuText}>Setting</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menu} onPress={handleLogout}>
+              <Ionicons name="log-out" size={20} color="#828282" />
+              <Text style={styles.menuText}>Logout</Text>
             </TouchableOpacity>
           </View>
 
@@ -177,7 +211,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalView: {
-    height: height * 0.4,
+    height: height * 0.45,
     width: width * 0.9,
     backgroundColor: 'white',
     borderRadius: 20,
@@ -193,13 +227,13 @@ const styles = StyleSheet.create({
     flex: 1.5,
     width: '100%',
     position: 'relative',
-    paddingBottom: 50,
+    paddingBottom: 90,
     padding: 10,
   },
   headerBottom: {
     marginTop: 5,
     flexDirection: 'row',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
   },
   emailText: {
     fontSize: 13,
@@ -227,7 +261,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    marginTop: 15
+    marginTop: 15,
   },
   wallet: {
     borderWidth: 0.3,
@@ -257,7 +291,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.2,
     borderBottomColor: '#000',
     marginTop: 8,
-    width: '100%' // 이 부분 추가
+    width: '100%',
   },
   profilePic: {
     marginRight: 10,
