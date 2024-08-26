@@ -11,7 +11,6 @@ export default function PlusMenu({ walletAddress, currentFolder, onMediaUpload }
   const [folderName, setFolderName] = useState('');
   const TOTAL_STORAGE_LIMIT = 10 * 1024 * 1024 * 1024;
 
-
   const handleSubmit = () => {
     alert('To be updated.');
   };
@@ -104,7 +103,6 @@ export default function PlusMenu({ walletAddress, currentFolder, onMediaUpload }
     }
   };
   
-
   const checkStorageAndUploadDoc = async (uri, fileName, mimeType) => {
     try {
       const response = await fetch(`http://13.124.248.7:2003/api/get-storage-usage?walletAddress=${walletAddress}`);
@@ -166,7 +164,6 @@ export default function PlusMenu({ walletAddress, currentFolder, onMediaUpload }
       console.error("Error picking document:", err);
     }
   };
-  
 
   const checkStorageAndUploadMedia = async (uri, fileName, mimeType) => {
     try {

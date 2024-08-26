@@ -12,14 +12,16 @@ import Tabs from './Tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import ChartScreen from '../screens/ChartScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuth, useSignIn, useUser } from '@clerk/clerk-expo';
 
 const Drawer = createDrawerNavigator();
 
 const totalStorage = 10;
 
 const DrawerMenu = () => {
-  const { isSignedIn, signOut } = useAuth();
+  const { isSignedIn } = useAuth();
+  const { signOut } = useSignIn();
+  const { user } = useUser();
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -176,6 +178,7 @@ const CustomDrawerContent = (props) => {
             try {
               await signOut();
               await AsyncStorage.removeItem('userEmail');
+              await AsyncStorage.removeItem('sessionId');
               await AsyncStorage.setItem('isLoggedIn', 'false');
             } catch (error) {
               console.error('Failed to sign out', error);
@@ -237,8 +240,7 @@ const CustomDrawerContent = (props) => {
           />
           <DrawerItem
             label="Favorite"
-            // onPress={() => props.navigation.navigate('Favorite')}
-            onPress={() => alert('To be updated...')}
+            onPress={() => props.navigation.navigate('Favorite')}
             icon={({ color, size }) => (
               <MaterialCommunityIcons name="star" color={color} size={size} />
             )}
