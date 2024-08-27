@@ -5,7 +5,7 @@ import { Colors } from '../Utils/colors';
 import ProfileModal from '../screens/ProfileModal';
 import { useUser } from '@clerk/clerk-react';
 
-const CustomHeader = ({ title, navigation }) => {
+const SubCustomHeader = ({ title, navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);  // Modal visibility
   const [sortType, setSortType] = useState('name');
   const [ascending, setAscending] = useState(true);
@@ -54,11 +54,10 @@ const CustomHeader = ({ title, navigation }) => {
       </View>
 
       <View style={styles.controlsContainer}>
-      <ProfileModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        navigation={navigation} // navigation 객체를 전달
-      />
+        <ProfileModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+        />
       </View>
     </SafeAreaView>
   );
@@ -106,4 +105,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default CustomHeader;
+export default SubCustomHeader;
