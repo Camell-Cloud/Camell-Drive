@@ -11,25 +11,22 @@ const FileScreen = () => {
   const [walletAddress, setWalletAddress] = useState(null);
   const [currentFolder, setCurrentFolder] = useState('');
   const [isShareModalVisible, setIsShareModalVisible] = useState(false);
-  const [isRenameModalVisible, setIsRenameModalVisible] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [fileNameToRename, setFileNameToRename] = useState('');
-  const [newFileName, setNewFileName] = useState('');
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState('');
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [selectedFileType, setSelectedFileType] = useState('');
+  const [favorites, setFavorites] = useState([]);
 
   const showShareModal = () => setIsShareModalVisible(true);
   const closeShareModal = () => setIsShareModalVisible(false);
-  const showRenameModal = (fileName) => {
-    setFileNameToRename(fileName);
-    setIsRenameModalVisible(true);
-  };
-  const closeRenameModal = () => {
-    setIsRenameModalVisible(false);
-    setFileNameToRename('');
-    setNewFileName('');
+
+  const handleSubmit = () => {
+    alert('To be updated');
   };
 
-  const fetchFolderContents = useCallback(async () => {
+  const fetchFavorites = useCallback(async () => {
     if (!walletAddress) return;
     try {
       const response = await fetch('http://13.124.248.7:8080/api/list-favorites', {
@@ -37,31 +34,30 @@ const FileScreen = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ walletAddress, folderPath: currentFolder }),
+        body: JSON.stringify({ walletAddress }),
       });
+
       const data = await response.json();
       if (data.success) {
-        const folderContents = data.contents.map(item => ({
+        const favoriteContents = data.contents.map(item => ({
           ...item,
           key: item.key.split('/').filter(part => part).pop(),
         }));
-        if (currentFolder) {
-          folderContents.unshift({ key: 'back', type: 'back' });
-        }
-        setFiles(folderContents);
+        setFiles(favoriteContents);
+        setFavorites(favoriteContents.map(item => item.key));
       } else {
-        console.error('폴더 내용을 가져오는 중 오류 발생:', data.error);
+        console.log('Error fetching favorites:', data.error);
       }
     } catch (error) {
-      console.error('API 오류:', error);
+      console.log('API error:', error);
     }
-  }, [walletAddress, currentFolder]);
+  }, [walletAddress]);
 
   useEffect(() => {
     const fetchWalletAddress = async () => {
       const email = await AsyncStorage.getItem('userEmail');
       if (!email) {
-        console.error('No email found in storage');
+        console.log('No email found in storage');
         return;
       }
 
@@ -77,10 +73,10 @@ const FileScreen = () => {
         if (data.success) {
           setWalletAddress(data.address);
         } else {
-          console.error('Error fetching wallet address:', data.error);
+          console.log('Error fetching wallet address:', data.error);
         }
       } catch (error) {
-        console.error('API error:', error);
+        console.log('API error:', error);
       }
     };
 
@@ -88,8 +84,15 @@ const FileScreen = () => {
   }, []);
 
   useEffect(() => {
-    fetchFolderContents();
-  }, [walletAddress, currentFolder, fetchFolderContents]);
+    fetchFavorites();
+  }, [walletAddress, fetchFavorites]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchFavorites();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [fetchFavorites]);
 
   const truncateName = (name) => {
     const maxLength = 20;
@@ -109,7 +112,7 @@ const FileScreen = () => {
 
   const downloadFile = async (fileName) => {
     if (!walletAddress) {
-      console.error('지갑 주소가 없습니다.');
+      console.log('지갑 주소가 없습니다.');
       return;
     }
 
@@ -126,7 +129,7 @@ const FileScreen = () => {
           }
         );
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          console.error('저장소 접근 권한이 거부되었습니다.');
+          console.log('저장소 접근 권한이 거부되었습니다.');
           return;
         }
       } catch (err) {
@@ -151,16 +154,16 @@ const FileScreen = () => {
         await RNFS.writeFile(path, base64data, 'base64')
           .then(() => {
             console.log('파일 다운로드 성공:', path);
-            Alert.alert('성공', '파일이 성공적으로 다운로드되었습니다.');
+            Alert.alert('Successful', 'Downloaded');
           })
           .catch((err) => {
-            console.error('파일 저장 오류:', err.message);
+            console.log('파일 저장 오류:', err.message);
           });
       };
       reader.readAsDataURL(blob);
 
     } catch (error) {
-      console.error('파일 다운로드 오류:', error.message);
+      console.log('파일 다운로드 오류:', error.message);
     }
   };
 
@@ -194,56 +197,24 @@ const FileScreen = () => {
     }
   };
 
-  const renameFile = async () => {
-    if (!walletAddress || !fileNameToRename || !newFileName) {
-      Alert.alert('Error', '필수 정보가 누락되었습니다.');
-      return;
-    }
-  
-    try {
-      const response = await fetch('http://13.124.248.7:8080/api/rename-object', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          walletAddress,
-          currentFolder,
-          oldFileName: fileNameToRename,
-          newFileName,
-        }),
-      });
-  
-      const text = await response.text();
-      try {
-        const data = JSON.parse(text);
-        if (data.success) {
-          Alert.alert('성공', '파일 이름이 성공적으로 변경되었습니다.');
-          fetchFolderContents();
-          closeRenameModal();
-        } else {
-          Alert.alert('Error', `파일 이름 변경 오류: ${data.error}`);
-        }
-      } catch (jsonError) {
-        console.error('JSON 파싱 오류:', jsonError);
-        console.error('응답 텍스트:', text);
-        Alert.alert('Error', '파일 이름 변경 중 오류가 발생하였습니다.');
-      }
-    } catch (error) {
-      console.error('파일 이름 변경 오류:', error);
-      Alert.alert('Error', '파일 이름 변경 중 오류가 발생하였습니다.');
-    }
-  }; 
-
   const renderFileItem = ({ item }) => {
     const isSelected = selectedItems.includes(item.key);
-
+    const isFavorite = favorites.includes(item.key);
+  
     return (
       <TouchableOpacity
         style={[styles.fileItem, isSelected && styles.selectedItem]}
         onPress={() => handlePress(item)}
         onLongPress={() => handleLongPress(item.key)}
       >
+        {isFavorite && (
+          <Ionicons
+            name='star'
+            size={20}
+            color='#FFD700'
+            style={[styles.favoriteIcon, { left: 8 }]}
+          />
+        )}
         {item.type === 'folder' ? (
           <Ionicons
             name='folder'
@@ -269,13 +240,13 @@ const FileScreen = () => {
         <Text style={styles.fileName}>{item.type === 'back' ? '...' : truncateName(item.key)}</Text>
         {isSelectionMode && (
           <View style={styles.selectionOverlay}>
-            <Ionicons name={isSelected ? "checkmark-circle" : "ellipse-outline"} size={30} color={isSelected ? Colors.themcolor : "gray"} />
+            <Ionicons name={isSelected ? "checkmark-circle" : "ellipse-outline"} size={20} color={isSelected ? Colors.themcolor : "gray"} />
           </View>
         )}
-        {item.type !== 'back' && (
+        {!isSelectionMode && item.type !== 'back' && (
           <TouchableOpacity
             style={styles.menuIcon}
-            onPress={() => showMenu(item.key)}
+            onPress={() => showMenu(item.key, item.type)}
           >
             <Ionicons name="ellipsis-vertical" size={15} color="#000" />
           </TouchableOpacity>
@@ -284,25 +255,25 @@ const FileScreen = () => {
     );
   };
 
-  const showMenu = (fileName) => {
-    Alert.alert("File Menu", `Actions for ${fileName}`, [
-      { text: 'Download', onPress: () => downloadFile(fileName) },
-      { text: 'Share', onPress: showShareModal },
-      { text: 'Remove from Favorates', onPress: () => toggleFavorite(fileName) },
-      { text: 'Move to Trash', onPress: () => moveToTrash(fileName) },
-      { text: 'Rename', onPress: () => showRenameModal(fileName) },
-      { text: 'Cancel', onPress: () => console.log('Cancel'), style: 'cancel' },
-    ]);
+  const showMenu = (fileName, type) => {
+    const isFavorite = favorites.includes(fileName);
+    setSelectedFileName(fileName);
+    setSelectedFileType(type);
+    setIsFavorite(isFavorite);
+    setIsMenuVisible(true);
   };
-
+  
   const toggleFavorite = async (fileName, type) => {
     if (!walletAddress) {
-      console.error('지갑 주소가 없습니다.');
+      console.log('지갑 주소가 없습니다.');
       return;
     }
   
+    const isFavorite = favorites.includes(fileName);
+    const url = isFavorite ? 'http://13.124.248.7:8080/api/remove-from-favorites' : 'http://13.124.248.7:8080/api/copy-to-favorites';
+  
     try {
-      const response = await fetch('http://13.124.248.7:8080/api/remove-from-favorites', {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -316,47 +287,15 @@ const FileScreen = () => {
       });
       const data = await response.json();
       if (data.success) {
-        Alert.alert('성공', '즐겨찾기에서 제거되었습니다.');
-        fetchFolderContents();
+        fetchFavorites();
       } else {
-        Alert.alert('Error',`즐겨찾기 제거 오류: ${data.error}`);
+        Alert.alert('Error', isFavorite ? `${data.error}` : `${data.error}`);
       }
     } catch (error) {
-      console.error('즐겨찾기 제거 오류:', error);
-      Alert.alert('Error', '즐겨찾기 제거 중 오류가 발생하였습니다.');
+      console.log(isFavorite ? '즐겨찾기 제거 오류:' : '즐겨찾기 추가 오류:', error);
+      Alert.alert('Error', isFavorite ? '' : '');
     }
   };  
-
-  const moveToTrash = async (fileName) => {
-    if (!walletAddress) {
-      console.error('지갑 주소가 없습니다.');
-      return;
-    }
-
-    try {
-      const response = await fetch('http://13.124.248.7:8080/api/move-to-trashBin', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          walletAddress,
-          currentFolder,
-          fileName,
-        }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        Alert.alert('성공', '휴지통으로 이동되었습니다.');
-        fetchFolderContents(); // Refresh folder contents
-      } else {
-        Alert.alert('Error', `휴지통으로 이동 오류: ${data.error}`);
-      }
-    } catch (error) {
-      console.error('휴지통으로 이동 오류:', error);
-      Alert.alert('Error', '휴지통으로 이동 중 오류가 발생하였습니다.');
-    }
-  };
 
   const goBack = () => {
     setCurrentFolder(prev => {
@@ -391,38 +330,29 @@ const FileScreen = () => {
             <Ionicons name="close-circle" size={25} color="gray" />
             <Text style={styles.selectionButtonText}>Cancel</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.selectionButton}>
+          <TouchableOpacity style={styles.selectionButton} onPress={handleSubmit}>
             <Ionicons name="download" size={25} color="gray" />
             <Text style={styles.selectionButtonText}>Download</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.selectionButton}>
+          <TouchableOpacity style={styles.selectionButton} onPress={handleSubmit}>
             <Ionicons name="share-social" size={25} color="gray" />
             <Text style={styles.selectionButtonText}>Share</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.selectionButton}>
-            <Ionicons name="trash" size={25} color="gray" />
-            <Text style={styles.selectionButtonText}>Trash</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.selectionButton}>
+          <TouchableOpacity style={styles.selectionButton} onPress={handleSubmit}>
             <Ionicons name="heart" size={25} color="gray" />
-            <Text style={styles.selectionButtonText}>Favorate</Text>
+            <Text style={styles.selectionButtonText}>Favorite</Text>
           </TouchableOpacity>
         </View>
       )}
-      <PlusMenu
-        walletAddress={walletAddress}
-        currentFolder={currentFolder}
-        onMediaUpload={fetchFolderContents}
-      />
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={isShareModalVisible}
         onRequestClose={closeShareModal}
       >
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
-            <Text style={styles.shareTitle}>공유하기</Text>
+            <Text style={styles.shareTitle}>Share</Text>
             <View style={styles.shareInput}>
               <TextInput style={styles.input} placeholder="Enter wallet address" />
               <TouchableOpacity onPress={() => console.log('Sending to')} style={styles.camerabutton}>
@@ -432,10 +362,10 @@ const FileScreen = () => {
             <View style={{ width: 200, alignItems: 'flex-end' }}>
               <View style={styles.shareButton}>
                 <TouchableOpacity onPress={() => console.log('Sending to')} style={styles.dialogButton}>
-                  <Text style={styles.dialogbuttonText}>보내기</Text>
+                  <Text style={styles.dialogbuttonText}>Send</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={closeShareModal} style={styles.dialogButton}>
-                  <Text style={styles.dialogbuttonText}>취소</Text>
+                  <Text style={styles.dialogbuttonText}>Cancel</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -444,32 +374,26 @@ const FileScreen = () => {
       </Modal>
 
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
-        visible={isRenameModalVisible}
-        onRequestClose={closeRenameModal}
+        visible={isMenuVisible}
+        onRequestClose={() => setIsMenuVisible(false)}
       >
-        <View style={styles.centeredView}>
-          <View style={styles.RenamemodalView}>
-            <Text style={styles.shareTitle}>이름 변경</Text>
-            <View style={styles.shareInput}>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter new file name"
-                value={newFileName}
-                onChangeText={setNewFileName}
-              />
-            </View>
-            <View style={{ width: 200, alignItems: 'flex-end' }}>
-              <View style={styles.shareButton}>
-                <TouchableOpacity onPress={renameFile} style={styles.dialogButton}>
-                  <Text style={styles.dialogbuttonText}>변경</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={closeRenameModal} style={styles.dialogButton}>
-                  <Text style={styles.dialogbuttonText}>취소</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Actions for {selectedFileName}</Text>
+            <TouchableOpacity onPress={() => { downloadFile(selectedFileName); setIsMenuVisible(false); }} style={styles.menuItem}>
+              <Text style={styles.menuText}>Download</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { showShareModal(); setIsMenuVisible(false); }} style={styles.menuItem}>
+              <Text style={styles.menuText}>Share</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { toggleFavorite(selectedFileName, selectedFileType); setIsMenuVisible(false); }} style={styles.menuItem}>
+              <Text style={styles.menuText}>{isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setIsMenuVisible(false)} style={[styles.menuItem, styles.cancelItem]}>
+              <Text style={styles.menuText}>Cancel</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -478,9 +402,13 @@ const FileScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  favoriteIcon: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+  },
   grid: {
     marginTop: 10,
-    paddingHorizontal: 10,
     paddingTop: 10,
   },
   fileItem: {
@@ -491,7 +419,7 @@ const styles = StyleSheet.create({
     maxWidth: '22%',
     borderRadius: 10,
     marginHorizontal: 5, 
-    marginBottom: -10
+    marginBottom: 5
   },
   selectedItem: {
     backgroundColor: '#d1e7ff',
@@ -565,21 +493,6 @@ const styles = StyleSheet.create({
   camerabutton: {
     marginRight: 10,
   },
-  RenamemodalView: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    width: '60%',
-    padding: 25,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
   selectionOverlay: {
     position: 'absolute',
     top: 5,
@@ -591,7 +504,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     padding: 10,
-    borderTopWidth: 1,
+    borderTopWidth: 0.2,
     borderTopColor: 'gray',
     backgroundColor: 'white',
   },
@@ -601,6 +514,37 @@ const styles = StyleSheet.create({
   selectionButtonText: {
     fontSize: 12,
     color: 'gray',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  menuItem: {
+    paddingVertical: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  menuText: {
+    fontSize: 16,
+  },
+  cancelItem: {
+    marginTop: 10,
+    backgroundColor: '#ddd',
+    borderRadius: 5,
   },
 });
 
