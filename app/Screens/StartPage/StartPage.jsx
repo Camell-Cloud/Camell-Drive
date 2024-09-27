@@ -8,18 +8,6 @@ export default function StartPage({ navigation }) {
   const [text, setText] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
-      console.log("Status", isLoggedIn)
-      if (isLoggedIn === 'true') {
-        navigation.navigate('Drawer');
-      }
-    };
-
-    checkLoginStatus();
-  }, []);
-
   const pasteFromClipboard = async () => {
     const clipboardContent = await Clipboard.getString();
     setText(clipboardContent);
