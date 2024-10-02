@@ -8,7 +8,7 @@ const WalletInfoModal = ({ visible, onClose, copyToClipboard, username}) => {
   const [walletAddress, setWalletAddress] = useState('');
   const [isAddAddressModalVisible, setIsAddAddressModalVisible] = useState(false); // 주소 추가 모달 상태
 
-
+  
 
   // 개인 지갑 주소를 불러오는 함수
 const fetchWalletAddress = async () => {
@@ -29,6 +29,28 @@ const fetchWalletAddress = async () => {
     }
   } catch (error) {
     Alert.alert('Error', `Error fetching wallet address: ${error.message}`);
+  }
+};
+
+const deleteWalletAddress = async () => {
+  try {
+    const response = await fetch('http://13.124.248.7:1212/delete-wallet-address', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username }), // 사용자 이름으로 요청
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      setWalletAddress(''); // 성공적으로 삭제되면 지갑 주소 초기화
+      Alert.alert('Success', 'Wallet address deleted successfully.');
+    } else {
+      Alert.alert('Error', data.message || 'Failed to delete wallet address.');
+    }
+  } catch (error) {
+    Alert.alert('Error', `Error deleting wallet address: ${error.message}`);
   }
 };
 
@@ -114,6 +136,7 @@ const saveWalletAddress = async (newAddress) => {
             </TouchableOpacity>
         </View>
 
+
         <View style={styles.contentContainer}>
             <Text style={styles.contentTitle}>Private Key</Text>
             <TouchableOpacity onPress={() => copyToClipboard(privateKey)} style={styles.contentValueContainer}>
@@ -124,25 +147,28 @@ const saveWalletAddress = async (newAddress) => {
         <View style={styles.contentContainer}>
           <Text style={styles.contentTitle}>Personal Wallet Address</Text>
           {walletAddress ? (
-            // 지갑 주소가 있으면 주소를 표시
-            <TouchableOpacity onPress={() => copyToClipboard(walletAddress)} style={styles.contentValueContainer}>
-              <Text style={styles.contentValue}>{walletAddress}</Text>
-            </TouchableOpacity>
+            <View>
+              <TouchableOpacity onPress={() => copyToClipboard(walletAddress)} style={styles.contentValueContainer}>
+                <Text style={styles.contentValue}>{walletAddress}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.deleteButton} onPress={deleteWalletAddress}>
+                <Text style={styles.deleteButtonText}>Delete Wallet Address</Text>
+              </TouchableOpacity>
+            </View>
           ) : (
-            // 지갑 주소가 없으면 추가 버튼 표시
             <TouchableOpacity style={styles.addButton} onPress={() => setIsAddAddressModalVisible(true)}>
               <Text style={styles.buttonText}>+ Add Personal Wallet Address</Text>
             </TouchableOpacity>
-
-
           )}
         </View>
+        
         <AddWalletAddressModal
           visible={isAddAddressModalVisible}
           onClose={() => setIsAddAddressModalVisible(false)}
           onSave={saveWalletAddress}
         />
       </View>
+
     </Modal>
     
   );
@@ -213,7 +239,18 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'snow',
 
-  }
+  },
+
+  deleteButton: {
+    backgroundColor: 'rgba(255, 0, 0, 0.7)',
+    padding: 10,
+    borderRadius: 20,
+    marginTop: 10,
+  },
+  deleteButtonText: {
+    color: 'white',
+    textAlign: 'center',
+  },
 });
 
 export default WalletInfoModal;
