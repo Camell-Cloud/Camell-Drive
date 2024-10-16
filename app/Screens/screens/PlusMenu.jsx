@@ -11,6 +11,7 @@ export default function PlusMenu({ walletAddress, currentFolder, onMediaUpload }
   const [folderName, setFolderName] = useState('');
   const TOTAL_STORAGE_LIMIT = 10 * 1024 * 1024 * 1024;
 
+
   const handleSubmit = () => {
     alert('To be updated.');
   };
@@ -58,112 +59,49 @@ export default function PlusMenu({ walletAddress, currentFolder, onMediaUpload }
     }
   };
 
-  const checkStorageAndUpload = async (fileUri, fileName, fileType) => {
-    try {
-      const response = await fetch(`http://13.124.248.7:2003/api/get-storage-usage?walletAddress=${walletAddress}`);
-      const data = await response.json();
-      if (data.totalSize !== undefined) {
-        const usedStorage = data.totalSize;
-        const fileInfo = await fetch(fileUri);
-        const fileBlob = await fileInfo.blob();
-        const fileSize = fileBlob.size;
+  const uploadFile = async () => {
+    const result = await DocumentPicker.getDocumentAsync({ type: '*/*' });
   
-        if (usedStorage + fileSize > TOTAL_STORAGE_LIMIT) {
-          Alert.alert('Storage limit exceeded', 'Cannot upload file as it exceeds the total storage limit.');
-          return;
-        }
-  
-        const formData = new FormData();
-        formData.append('fileContent', {
-          uri: fileUri,
-          type: fileType,
-          name: fileName,
-        });
-        formData.append('walletAddress', walletAddress);
-        formData.append('fileName', fileName);
-  
-        const uploadResponse = await fetch('http://13.124.248.7:2003/api/mediaupload-file', {
-          method: 'POST',
-          body: formData,
-        });
-  
-        const uploadData = await uploadResponse.json();
-        if (uploadData.success) {
-          onMediaUpload();
-        } else {
-          console.error('미디어 업로드 오류:', uploadData.error);
-          Alert.alert('Failed', `Media upload error: ${uploadData.error}`);
-        }
-      } else {
-        console.error('Error fetching storage usage:', data.error);
-      }
-    } catch (error) {
-      console.error('API 오류:', error.message);
-      Alert.alert('Error', `API error: ${error.message}`);
+    if (result.type === 'cancel') {
+      Alert.alert('Upload cancelled');
+      return;
     }
-  };
   
-  const checkStorageAndUploadDoc = async (uri, fileName, mimeType) => {
+    const { uri, name } = result;
+    const mimeType = 'application/octet-stream'; // Default MIME type
+  
+    const formData = new FormData();
+    formData.append('fileContent', {
+      uri,
+      type: mimeType,
+      name,
+    });
+    formData.append('walletAddress', walletAddress);
+    formData.append('fileName', name);
+  
     try {
-      const response = await fetch(`http://13.124.248.7:2003/api/get-storage-usage?walletAddress=${walletAddress}`);
-      const data = await response.json();
-      if (data.totalSize !== undefined) {
-        const usedStorage = data.totalSize;
-        const fileInfo = await fetch(uri);
-        const fileBlob = await fileInfo.blob();
-        const fileSize = fileBlob.size;
-  
-        if (usedStorage + fileSize > TOTAL_STORAGE_LIMIT) {
-          console.log(usedStorage, fileSize, TOTAL_STORAGE_LIMIT)
-          Alert.alert('Storage limit exceeded', 'Cannot upload file as it exceeds the total storage limit.');
-          return;
-        }
-  
-        const formData = new FormData();
-        formData.append('file', {
-          uri,
-          type: mimeType,
-          name: fileName,
-        });
-        formData.append('walletAddress', walletAddress);
-        formData.append('folderPath', currentFolder || '');
-  
-        const uploadResponse = await fetch('http://13.124.248.7:8080/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-  
-        const uploadData = await uploadResponse.json();
-        if (uploadData.success) {
-          Alert.alert('Success', 'File uploaded successfully.');
-        } else {
-          console.error('파일 업로드 오류:', uploadData.error);
-          Alert.alert('Failed', `File upload error: ${uploadData.error}`);
-        }
-      } else {
-        console.error('Error fetching storage usage:', data.error);
-      }
-    } catch (error) {
-      console.error('API 오류:', error.message);
-      Alert.alert('Error', `API error: ${error.message}`);
-    }
-  };
-  
-  const selectDoc = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*",
+      const response = await fetch('http://13.124.248.7:2003/api/upload', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
-      if (result.assets[0].uri) {
-        const uri = result.assets[0].uri;
-        const fileName = result.assets[0].name;
-        const mimeType = result.assets[0].mimeType;
-        checkStorageAndUploadDoc(uri, fileName, mimeType);
+  
+      const data = await response.json();
+  
+      if (data.success) {
+        Alert.alert('Success', 'File uploaded successfully');
+        onMediaUpload();
+      } else {
+        console.error('Upload error:', data.error);
+        Alert.alert('Failed', `Upload error: ${data.error}`);
       }
-    } catch (err) {
-      console.error("Error picking document:", err);
+    } catch (error) {
+      console.error('API error:', error.message);
+      Alert.alert('Error', `API error: ${error.message}`);
     }
-  };
+  };  
 
   const checkStorageAndUploadMedia = async (uri, fileName, mimeType) => {
     try {
@@ -210,6 +148,7 @@ export default function PlusMenu({ walletAddress, currentFolder, onMediaUpload }
     }
   };
   
+  
   const selectMedia = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
   
@@ -220,6 +159,28 @@ export default function PlusMenu({ walletAddress, currentFolder, onMediaUpload }
   
     const pickerResult = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+  
+    if (!pickerResult.canceled) {
+      const uri = pickerResult.assets[0].uri;
+      const fileName = uri.split('/').pop();
+      const mimeType = 'image/jpeg'; // Adjust as needed based on the actual file type
+      checkStorageAndUploadMedia(uri, fileName, mimeType);
+    }
+  };
+
+  const takePhoto = async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+  
+    if (!permissionResult.granted) {
+      Alert.alert('Permission to access camera is required!');
+      return;
+    }
+  
+    const pickerResult = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
@@ -249,7 +210,7 @@ export default function PlusMenu({ walletAddress, currentFolder, onMediaUpload }
         animationType="slide"
         transparent={true}
         visible={isModalVisible}
-        onRequestClose={toggleMenuModal}
+        onRequestClose={toggleMenuModal} 
       >
         <TouchableWithoutFeedback onPress={closeModal}>
           <View style={styles.modalOverlay}>
@@ -257,8 +218,8 @@ export default function PlusMenu({ walletAddress, currentFolder, onMediaUpload }
               <MenuItem
                 icon={<MaterialIcons name="note-add" size={22} color="gray" />}
                 label="Upload file"
-                onPress={async () => {
-                  await selectDoc();
+                onPress={async ()=> {
+                  await uploadFile();
                   toggleMenuModal();
                 }}
               />
@@ -280,7 +241,10 @@ export default function PlusMenu({ walletAddress, currentFolder, onMediaUpload }
               <MenuItem
                 icon={<MaterialIcons name="add-a-photo" size={22} color="gray" />}
                 label="Photo shoot"
-                onPress={handleSubmit}
+                onPress={async () => {
+                  await takePhoto();
+                  toggleMenuModal();
+                }}
               />
             </View>
           </View>
@@ -312,7 +276,7 @@ export default function PlusMenu({ walletAddress, currentFolder, onMediaUpload }
                 <Text style={styles.dialogbuttonText}>Cancel</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </View> 
         </View>
       </Modal>
     </View>
