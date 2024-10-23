@@ -12,18 +12,11 @@ app = Flask(__name__)
 # MySQL 데이터베이스 연결
 def get_db_connection():
     return pymysql.connect(
-        host='camt.c9mewi0ymg6g.ap-northeast-2.rds.amazonaws.com',
-        user='camt',
-        password='Skills2024**',
-        database='camelldrive',
         cursorclass=pymysql.cursors.DictCursor
     )
 
 # S3 클라이언트 생성
 s3 = boto3.client(
-    's3',
-    aws_access_key_id='****',
-    aws_secret_access_key='****',
     region_name='ap-northeast-2'
 )
 
