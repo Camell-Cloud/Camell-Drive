@@ -38,7 +38,7 @@ def save_temp_user():
     # 현재 시간 UTC에서 KST로 변환
     utc_now = datetime.utcnow()  # 현재 UTC 시간
     kst = pytz.timezone('Asia/Seoul')  # 한국 표준시 타임존
-    kst_now = utc_now.astimezone(kst)  # UTC 시간을 KST로 변환
+    kst_now = utc_now.astimezone(kst)  #  UTC 시간을 KST로 변환
     
     # MySQL에 사용자 정보 저장
     connection = get_db_connection()
@@ -62,6 +62,33 @@ def save_temp_user():
         except pymysql.MySQLError as e:
             return jsonify({"success": False, "message": f"Database error: {str(e)}"}), 500
     connection.close()
+
+@app.route('/save-pin', methods=['POST'])
+def save_pin():
+    data = request.json
+
+    # 요청에 필요한 데이터가 있는지 확인
+    if not data or 'username' not in data or 'pin' not in data:
+        return jsonify({"success": False, "message": "Missing required fields"}), 400
+
+    username = data.get('username')
+    pin = data.get('pin')
+
+    # 데이터베이스에 PIN 저장
+    connection = get_db_connection()
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute('''
+                UPDATE User
+                SET pin = %s
+                WHERE username = %s
+            ''', (pin, username))
+            connection.commit()
+            return jsonify({"success": True, "message": "PIN saved successfully"}), 200
+        except pymysql.MySQLError as e:
+            return jsonify({"success": False, "message": f"Database error: {str(e)}"}), 500
+        finally:
+            connection.close()
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=1212)
