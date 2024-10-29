@@ -90,5 +90,25 @@ def save_pin():
         finally:
             connection.close()
 
+@app.route('/check-private-key', methods=['POST'])
+def check_private_key():
+    data = request.json
+
+    if not data or 'private_key' not in data:
+        return jsonify({"success": False, "message": "Missing private_key field"}), 400
+
+    private_key = data.get('private_key')
+
+    connection = get_db_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT username FROM User WHERE private_key = %s", (private_key,))
+        user = cursor.fetchone()
+
+        if user:
+            return jsonify({"success": True, "username": user['username']}), 200
+        else:
+            return jsonify({"success": False, "message": "Invalid private key"}), 400
+    connection.close()
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=1212)
