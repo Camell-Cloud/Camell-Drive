@@ -110,5 +110,24 @@ def check_private_key():
             return jsonify({"success": False, "message": "Invalid private key"}), 400
     connection.close()
 
+@app.route('/confirm-user', methods=['POST'])
+def confirm_user():
+    data = request.json
+
+    if not data or 'username' not in data:
+        return jsonify({"success": False, "message": "Missing username field"}), 400
+
+    username = data.get('username')
+    
+    connection = get_db_connection()
+    with connection.cursor() as cursor:
+        cursor.execute('SELECT * FROM User WHERE username = %s', (username,))
+        user = cursor.fetchone()
+        if user:
+            return jsonify({"success": True, "message": "User data confirmed", "user": user}), 200
+        else:
+            return jsonify({"success": False, "message": "User not found"}), 404
+    connection.close()
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=1212)
