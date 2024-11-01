@@ -129,5 +129,33 @@ def confirm_user():
             return jsonify({"success": False, "message": "User not found"}), 404
     connection.close()
 
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({"success": False, "message": "Internal server error"}), 500
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return jsonify({"success": False, "message": "Resource not found"}), 404
+
+
+@app.route('/get-balance', methods=['POST'])
+def get_balance():
+    data = request.json
+    username = data.get('username')
+
+    if not username:
+        return jsonify({"success": False, "message": "Username is required"}), 400
+
+    connection = get_db_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT CAMT_amount FROM User WHERE username = %s", (username,))
+        result = cursor.fetchone()
+
+        if result:
+            return jsonify({"success": True, "balance": result['CAMT_amount']}), 200
+        else:
+            return jsonify({"success": False, "message": "User not found"}), 404
+    connection.close()
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=1212)
