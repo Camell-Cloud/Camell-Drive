@@ -157,5 +157,25 @@ def get_balance():
             return jsonify({"success": False, "message": "User not found"}), 404
     connection.close()
 
+@app.route('/check-username', methods=['POST'])
+def check_username():
+    data = request.json
+    if not data or 'username' not in data:
+        return jsonify({"success": False, "message": "Missing username field"}), 400
+
+    username = data.get('username')
+
+    # 데이터베이스에서 유저네임 확인
+    connection = get_db_connection()
+    with connection.cursor() as cursor:
+        cursor.execute('SELECT * FROM User WHERE username = %s', (username,))
+        user = cursor.fetchone()
+
+        if user:
+            return jsonify({"success": True, "exists": True}), 200
+        else:
+            return jsonify({"success": True, "exists": False}), 404
+    connection.close()
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=1212)
