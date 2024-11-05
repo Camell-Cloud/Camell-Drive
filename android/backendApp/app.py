@@ -177,5 +177,68 @@ def check_username():
             return jsonify({"success": True, "exists": False}), 404
     connection.close()
 
+@app.route('/update-amount', methods=['POST'])
+def update_amount():
+    app.logger.info('Received /update-amount request')
+
+    data = request.json
+    app.logger.info(f'Request data: {data}')
+
+    if not data or 'sender' not in data or 'receiver' not in data or 'amount' not in data:
+        app.logger.error(f'Missing required fields. Data: {data}')
+        return jsonify({"success": False, "message": "Missing required fields"}), 400
+
+    sender = data.get('sender')
+    receiver = data.get('receiver')
+    amount = data.get('amount')
+
+    try:
+        amount = float(amount)
+        if amount <= 0:
+            raise ValueError("Amount must be greater than zero")
+    except ValueError as e:
+        app.logger.error(f'Invalid amount: {amount}, Error: {e}')
+        return jsonify({"success": False, "message": "Invalid amount value"}), 400
+
+    app.logger.info(f'Sender: {sender}, Receiver: {receiver}, Amount: {amount}')
+
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # 보내는 사람의 잔액 확인
+            cursor.execute('SELECT CAMT_amount FROM User WHERE username = %s', (sender,))
+            sender_balance = cursor.fetchone()
+
+            if sender_balance is None:
+                app.logger.error(f'Sender not found: {sender}')
+                return jsonify({"success": False, "message": "Sender not found"}), 404
+
+            if sender_balance['CAMT_amount'] < amount:
+                app.logger.error(f'Insufficient funds for sender: {sender}')
+                return jsonify({"success": False, "message": "Insufficient funds"}), 400
+
+            # 보내는 사람의 잔액 차감
+            cursor.execute('''
+                UPDATE User
+                SET CAMT_amount = CAMT_amount - %s
+                WHERE username = %s
+            ''', (amount, sender))
+
+            # 받는 사람의 잔액 추가
+            cursor.execute('''
+                UPDATE User
+                SET CAMT_amount = CAMT_amount + %s
+                WHERE username = %s
+            ''', (amount, receiver))
+
+            connection.commit()
+
+        app.logger.info('Transaction successfully completed')
+        return jsonify({"success": True, "message": "Transaction completed successfully"}), 200
+
+    except Exception as e:
+        app.logger.error(f'Error processing transaction: {e}')
+        return jsonify({"success": False, "message": f"Error processing transaction: {str(e)}"}), 500
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=1212)
