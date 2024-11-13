@@ -240,5 +240,31 @@ def update_amount():
         app.logger.error(f'Error processing transaction: {e}')
         return jsonify({"success": False, "message": f"Error processing transaction: {str(e)}"}), 500
 
+@app.route('/save-wallet-address', methods=['POST'])
+def save_wallet_address():
+    data = request.json
+
+    if not data or 'username' not in data or 'personal_wallet_address' not in data:
+        return jsonify({"success": False, "message": "Missing required fields"}), 400
+
+    username = data.get('username')
+    personal_wallet_address = data.get('personal_wallet_address')
+
+    # 데이터베이스에 personal_wallet_address 저장
+    connection = get_db_connection()
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute('''
+                UPDATE User
+                SET personal_wallet_address = %s
+                WHERE username = %s
+            ''', (personal_wallet_address, username))
+            connection.commit()
+            return jsonify({"success": True, "message": "Personal wallet address saved successfully"}), 200
+        except pymysql.MySQLError as e:
+            return jsonify({"success": False, "message": f"Database error: {str(e)}"}), 500
+        finally:
+            connection.close()
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=1212)
