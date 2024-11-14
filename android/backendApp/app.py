@@ -268,3 +268,28 @@ def save_wallet_address():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=1212)
+
+@app.route('/get-wallet-address', methods=['POST'])
+def get_wallet_address():
+    data = request.json
+
+    if not data or 'username' not in data:
+        return jsonify({"success": False, "message": "Missing username field"}), 400
+
+    username = data.get('username')
+
+    # 데이터베이스에서 personal_wallet_address 가져오기
+    connection = get_db_connection()
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute("SELECT personal_wallet_address FROM User WHERE username = %s", (username,))
+            result = cursor.fetchone()
+
+            if result and result['personal_wallet_address']:
+                return jsonify({"success": True, "personal_wallet_address": result['personal_wallet_address']}), 200
+            else:
+                return jsonify({"success": False, "message": "User or wallet address not found"}), 404
+        except pymysql.MySQLError as e:
+            return jsonify({"success": False, "message": f"Database error: {str(e)}"}), 500
+        finally:
+            connection.close()
