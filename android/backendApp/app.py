@@ -266,9 +266,6 @@ def save_wallet_address():
         finally:
             connection.close()
 
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=1212)
-
 @app.route('/get-wallet-address', methods=['POST'])
 def get_wallet_address():
     data = request.json
@@ -293,3 +290,34 @@ def get_wallet_address():
             return jsonify({"success": False, "message": f"Database error: {str(e)}"}), 500
         finally:
             connection.close()
+
+@app.route('/check-pin', methods=['POST'])
+def check_pin():
+    data = request.json
+
+    # Check if the required field is present
+    if not data or 'username' not in data:
+        return jsonify({"success": False, "message": "Missing required fields"}), 400
+
+    username = data.get('username')
+
+    # Connect to the database
+    connection = get_db_connection()
+    with connection.cursor() as cursor:
+        try:
+            # Check if there is a PIN associated with the username
+            cursor.execute('SELECT pin FROM User WHERE username = %s', (username,))
+            result = cursor.fetchone()
+
+            if result and result['pin']:  # If a PIN exists for the user
+                return jsonify({"success": True, "exists": True, "pin": result['pin']}), 200
+            else:
+                return jsonify({"success": True, "exists": False}), 404  # No PIN found for the user
+        except pymysql.MySQLError as e:
+            return jsonify({"success": False, "message": f"Database error: {str(e)}"}), 500
+        finally:
+            connection.close()
+
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=1212)
