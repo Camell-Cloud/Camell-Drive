@@ -349,7 +349,7 @@ def delete_wallet_address():
 @app.route('/get-private-key', methods=['POST'])
 def get_private_key():
     data = request.json
-
+     
     if not data or 'username' not in data:
         return jsonify({"success": False, "message": "Missing username field"}), 400
 
@@ -370,6 +370,7 @@ def get_private_key():
             return jsonify({"success": False, "message": f"Database error: {str(e)}"}), 500
         finally:
             connection.close()
+
 
 
 if __name__ == '__main__':
