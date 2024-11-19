@@ -345,5 +345,32 @@ def delete_wallet_address():
         finally:
             connection.close()
 
+
+@app.route('/get-private-key', methods=['POST'])
+def get_private_key():
+    data = request.json
+
+    if not data or 'username' not in data:
+        return jsonify({"success": False, "message": "Missing username field"}), 400
+
+    username = data.get('username')
+
+    # 데이터베이스에서 private_key 가져오기
+    connection = get_db_connection()
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute("SELECT private_key FROM User WHERE username = %s", (username,))
+            result = cursor.fetchone()
+
+            if result and result['private_key']:
+                return jsonify({"success": True, "private_key": result['private_key']}), 200
+            else:
+                return jsonify({"success": False, "message": "User or private key not found"}), 404
+        except pymysql.MySQLError as e:
+            return jsonify({"success": False, "message": f"Database error: {str(e)}"}), 500
+        finally:
+            connection.close()
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=1212)
