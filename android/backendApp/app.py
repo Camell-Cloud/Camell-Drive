@@ -371,6 +371,99 @@ def get_private_key():
         finally:
             connection.close()
 
+@app.route('/confirm-deposit', methods=['POST'])
+def confirm_deposit():
+    data = request.json
+
+    print("Received request data:", data)
+
+    # 필수 필드 확인
+    if not data or 'username' not in data or 'amount' not in data:
+        print("Missing required fields in request data")
+        return jsonify({"success": False, "message": "Missing required fields"}), 400
+
+    username = data.get('username')
+    amount = float(data.get('amount'))
+    recipient_address = "TRGD3LfYqYwaqH2zFryyJi2rgELM7beiFw"  # CAMT 입금 주소
+    contract_address = "TW2u8PNnFpRoZ3MeS2AuPUoz6iGMEiMBYh"  # 테스트용 토큰 스마트 컨트랙트 주소
+
+    # 사용자 개인 지갑 주소 가져오기 (username으로 데이터베이스 조회)
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT personal_wallet_address FROM User WHERE username = %s", (username,))
+            result = cursor.fetchone()
+            if not result or not result['personal_wallet_address']:
+                print(f"No personal wallet address found for user: {username}")
+                return jsonify({"success": False, "message": "No personal wallet address found for user"}), 400
+
+            wallet_address = result['personal_wallet_address']
+            print(f"Retrieved personal wallet address for user {username}: {wallet_address}")
+
+        # TronScan API를 사용하여 트랜잭션 확인
+        tron_scan_api = f"https://api.trongrid.io/v1/accounts/{wallet_address}/transactions/trc20"
+        print("Fetching transaction details from TronScan API:", tron_scan_api)
+        response = requests.get(tron_scan_api)
+
+        if response.status_code != 200:
+            print("Failed to fetch transaction details, status code:", response.status_code)
+            return jsonify({"success": False, "message": "Failed to fetch transaction details"}), 500
+
+        transactions = response.json().get("data", [])
+
+        # 주소에서 보낸 특정 트랜잭션이 있는지 확인
+        transaction_confirmed = False
+        transaction_id = None
+        expected_value = amount * (10 ** 18)  # 소수점 18자리 변환
+
+        for txn in transactions:
+            if (txn["to"] == recipient_address and
+                txn["token_info"]["address"] == contract_address and
+                float(txn["value"]) == expected_value):
+                transaction_id = txn['transaction_id']
+                
+                # 중복 처리 방지: 이미 처리된 트랜잭션인지 확인
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT * FROM ProcessedTransactions WHERE transaction_id = %s", (transaction_id,))
+                    processed = cursor.fetchone()
+                    if processed:
+                        return jsonify({"success": False, "message": "Transaction has already been processed"}), 400
+                
+                transaction_confirmed = True
+                print(f"Transaction confirmed for amount: {amount}")
+                break
+
+        if transaction_confirmed:
+            # 데이터베이스에 트랜잭션 기록 추가 및 금액 업데이트
+            with connection.cursor() as cursor:
+                # 트랜잭션 기록 저장
+                cursor.execute('''
+                    INSERT INTO ProcessedTransactions (transaction_id, username, amount)
+                    VALUES (%s, %s, %s)
+                ''', (transaction_id, username, amount))
+
+                # 사용자 잔액 업데이트
+                cursor.execute('''
+                    UPDATE User
+                    SET CAMT_amount = CAMT_amount + %s
+                    WHERE username = %s
+                ''', (amount, username))
+                
+                connection.commit()
+                print(f"Deposit confirmed and balance updated for user {username}")
+
+            return jsonify({"success": True, "message": "Deposit confirmed and balance updated"}), 200
+
+        else:
+            print(f"Transaction not found or not confirmed for user {username}, amount: {amount}")
+            return jsonify({"success": False, "message": "Transaction not found or not confirmed"}), 400
+
+    except Exception as e:
+        print("Error confirming deposit:", str(e))
+        return jsonify({"success": False, "message": f"Error confirming deposit: {str(e)}"}), 500
+
+    finally:
+        connection.close()
 
 
 if __name__ == '__main__':
