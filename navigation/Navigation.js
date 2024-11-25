@@ -8,7 +8,7 @@ import MediaScreen from '../Screens/MediaScreen';
 import IconI from 'react-native-vector-icons/Ionicons';
 import Colors from '../Components/Colors';
 import CustomDrawerContent from './CustomDrawerContent';
-import AuthNavigator from './AuthNativator';
+import AuthNavigator from './AuthNavigator';
 import { useState } from 'react';
 
 const Tab = createBottomTabNavigator();
@@ -18,7 +18,7 @@ const Drawer = createDrawerNavigator();
 function DrawerNavigator({setIsAuthenticated}) {
   return (
     <Drawer.Navigator
-      drawerContent={(props) => <CustomDrawerContent navigation={{...props}} setIsAuthenticated={setIsAuthenticated} />}
+      drawerContent={(props) => <CustomDrawerContent {...props} setIsAuthenticated={setIsAuthenticated} />}
       screenOptions={{
         headerShown: false,
         drawerType: 'front',
@@ -95,7 +95,7 @@ export default function Navigation() {
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? ( <DrawerNavigator setIsAuthenticated={setIsAuthenticated}/> ) : ( <AuthNavigator setIsAuthenticated={setIsAuthenticated} /> )}
+      {isAuthenticated ? ( <DrawerNavigator setIsAuthenticated={setIsAuthenticated} /> ) : ( <AuthNavigator setIsAuthenticated={setIsAuthenticated} /> )}
     </NavigationContainer>
   );
   
