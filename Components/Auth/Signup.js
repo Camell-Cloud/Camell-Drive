@@ -1,7 +1,6 @@
 
 import { View, Text, StyleSheet, TextInput,Pressable, Image, SafeAreaView, Platform } from 'react-native';
 import React, { useState } from 'react';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import Colors from '../../Components/Colors';
 import TermsOfServiceModal from '../../Components/Auth/TermsOfServiceModal';
 import PrivateKeyModal from '../../Components/Auth/PrivateKeyModal';
@@ -25,9 +24,6 @@ export default function Signup({navigation, setIsAuthenticated}){
       else { setErrorMessage("사용중인 이름입니다") }
     }
     
-    async function postUserName(){
-    }
-
     return(
         <View>
             {/* 유저 이름 */}
