@@ -17,7 +17,10 @@ export default function Login({ navigation, setIsAuthenticated }) {
         }).then(response => response.json() )
         console.log(response)
         if(response.username){ setIsAuthenticated(true) }
-        else { setErrorMessage("존재하지 않는 키 입니다") }
+        else { 
+          console.log(response)
+          setErrorMessage("존재하지 않는 키 입니다")
+        }
     }
 
     return (
