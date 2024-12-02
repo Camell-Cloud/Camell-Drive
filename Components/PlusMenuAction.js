@@ -4,6 +4,9 @@ import Colors from "./Colors";
 import IconA from 'react-native-vector-icons/AntDesign'
 import IconI from 'react-native-vector-icons/Ionicons'
 
+import UploadFile from "./File/UploadFile";
+
+
 export default function PlusMenuAction({ setModalVisible, modalVisible, pageType }) {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(300)).current;
@@ -44,7 +47,7 @@ export default function PlusMenuAction({ setModalVisible, modalVisible, pageType
   
     const items = pageType === "file" 
       ? [
-          { icon: "addfile", text: "Upload File", action: () => console.log("Upload File"), iconComponent: IconA },
+          { icon: "addfile", text: "Upload File", action: () => UploadFile(), iconComponent: IconA },
           { icon: "addfolder", text: "Create Folder", action: () => console.log("Create Folder"), iconComponent: IconA },
           { icon: "camerao", text: "Photo shoot", action: () => console.log("Photo Shoot"), iconComponent: IconA },
         ]
