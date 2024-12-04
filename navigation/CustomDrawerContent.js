@@ -11,6 +11,7 @@ import IconM from 'react-native-vector-icons/MaterialCommunityIcons';
 import Colors from '../Components/Colors';
 import * as Progress from 'react-native-progress';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 export default function CustomDrawerContent({ navigation, setIsAuthenticated }) {

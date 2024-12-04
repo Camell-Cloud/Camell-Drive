@@ -10,6 +10,9 @@ import Colors from '../Components/Colors';
 import CustomDrawerContent from './CustomDrawerContent';
 import AuthNavigator from './AuthNavigator';
 import { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
 
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -90,8 +93,16 @@ function TabNavigator() {
   );
 }
 
-export default function Navigation() {
+export default async function Navigation() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [username, setUsername] = useState(null);
+  const storageUsername = await AsyncStorage.getItem('username');
+
+  console.log(storageUsername)
+  if(storageUsername){
+    setUsername(storageUsername)
+    setIsAuthenticated(true)
+  }
 
   return (
     <NavigationContainer>

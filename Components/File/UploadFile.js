@@ -3,5 +3,6 @@ import { View, Text, Button } from 'react-native';
 
 
 export default async function UploadFile() {
-    conhsole.log("file upload")
+    console.log("file upload");
+    
 }

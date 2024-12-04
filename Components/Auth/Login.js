@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput,Pressable } from 'react-native';
 import React, { useState } from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Colors from '../../Components/Colors';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 export default function Login({ navigation, setIsAuthenticated }) {
@@ -16,7 +17,10 @@ export default function Login({ navigation, setIsAuthenticated }) {
             body: JSON.stringify({ privateKey }),
         }).then(response => response.json() )
         console.log(response)
-        if(response.username){ setIsAuthenticated(true) }
+        if(response.username){ 
+          await AsyncStorage.setItem('username', username);;
+          setIsAuthenticated(true) 
+        }
         else { 
           console.log(response)
           setErrorMessage("존재하지 않는 키 입니다")

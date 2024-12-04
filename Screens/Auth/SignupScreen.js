@@ -42,6 +42,7 @@ export default function SignupScreen({ navigation, setIsAuthenticated }) {
   );
 }
 
+ 
 const styles = StyleSheet.create({
     container: {
         backgroundColor: Colors.authBackground,

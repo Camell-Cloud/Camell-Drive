@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Image, TextInput, Pressable } from 'react-native';
+  import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
 import React, { useState } from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Clipboard } from 'react-native';  
@@ -87,14 +87,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     margin: 10,
   },
-  input: {
-    fontSize: 12,
-    width: '100%',
-    height: 40,
-    borderWidth: 0.5,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-  },
+
   loginText: {
     fontSize: 14,
     color: 'gray',
