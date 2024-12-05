@@ -135,7 +135,8 @@ export default function CustomDrawerContent({ navigation, setIsAuthenticated }) 
                             ? [styles.items, styles.pressed] 
                             : styles.items
                         }            
-                        onPress={() => {
+                        onPress={() => async function(){
+                            await AsyncStorage.setItem('username', null);;
                             setIsAuthenticated(false);
                         }}
                     >
