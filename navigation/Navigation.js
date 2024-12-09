@@ -9,7 +9,7 @@ import IconI from 'react-native-vector-icons/Ionicons';
 import Colors from '../Components/Colors';
 import CustomDrawerContent from './CustomDrawerContent';
 import AuthNavigator from './AuthNavigator';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
@@ -93,21 +93,33 @@ function TabNavigator() {
   );
 }
 
-export default async function Navigation() {
+export default function Navigation() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState(null);
-  const storageUsername = await AsyncStorage.getItem('username');
 
-  console.log(storageUsername)
-  if(storageUsername){
-    setUsername(storageUsername)
-    setIsAuthenticated(true)
-  }
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      try {
+        const storageUsername = await AsyncStorage.getItem('username');
+        if (storageUsername) {
+          setUsername(storageUsername);
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error('Failed to fetch username from storage:', error);
+      }
+    };
+
+    checkAuthentication();
+  }, []); // 빈 배열은 이 효과가 처음 렌더링될 때만 실행되도록 보장합니다.
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? ( <DrawerNavigator setIsAuthenticated={setIsAuthenticated} /> ) : ( <AuthNavigator setIsAuthenticated={setIsAuthenticated} /> )}
+      {isAuthenticated ? (
+        <DrawerNavigator setIsAuthenticated={setIsAuthenticated} />
+      ) : (
+        <AuthNavigator setIsAuthenticated={setIsAuthenticated} />
+      )}
     </NavigationContainer>
   );
-  
 }

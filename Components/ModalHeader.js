@@ -8,7 +8,7 @@ export default function ModalHeader({ children, closeModal }) {
             <Pressable onPress={closeModal}>
                 <IconI name="chevron-back-outline" size={35} color='black'/>
             </Pressable>
-            <Text style={{fontSize: 20, fontWeight: 'bold'}}>{children}</Text>
+                <Text style={{fontSize: 20, fontWeight: 'bold'}}>{children}</Text>
             <Pressable>
                 <IconI name="person-circle-outline" size={35} color='black'/>
             </Pressable>
@@ -21,7 +21,6 @@ const styles = StyleSheet.create({
         height: 60,
         justifyContent: 'space-between',
         width: '100%',
-        borderBottomWidth: 0.3,
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 15,

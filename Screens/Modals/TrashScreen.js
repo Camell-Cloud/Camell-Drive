@@ -5,7 +5,7 @@ import Colors from '../../Components/Colors';
 
 export default function TrashModal({ closeModal }) {
     return (
-        <View style={{backgroundColor: Colors.background,flex: 1}}>
+        <View style={{backgroundColor: Colors.background, flex: 1}}>
             <StatusBar barStyle={'dark-content'} backgroundColor={'white'}/>
             <SafeAreaView style={styles.modalContainer}>
                 <ModalHeader closeModal={closeModal}>Trash</ModalHeader>

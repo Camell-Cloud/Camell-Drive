@@ -1,13 +1,12 @@
-  import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
 import React, { useState } from 'react';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Clipboard } from 'react-native';  
 import Colors from '../../Components/Colors';
 import Login from '../../Components/Auth/Login';
 
 export default function StartScreen({ navigation, setIsAuthenticated }) {
   const [text, setText] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+
 
   const pasteFromClipboard = async () => {
     const clipboardContent = await Clipboard.getString();
@@ -40,7 +39,6 @@ export default function StartScreen({ navigation, setIsAuthenticated }) {
           <View style={{ width: '100%' }}>
             <Text style={styles.loginText}>Already registered?</Text>
           </View>
-
 
           {/* 로그인 */}
           <Login setIsAuthenticated={setIsAuthenticated} />
@@ -87,7 +85,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     margin: 10,
   },
-
+  input: {
+    fontSize: 12,
+    width: '100%',
+    height: 40,
+    borderWidth: 0.5,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+  },
   loginText: {
     fontSize: 14,
     color: 'gray',
@@ -107,28 +112,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
     textAlign: 'center',
-  },
-  enterText: {
-    color: 'black',
-    fontSize: 18,
-    margin: 10,
-    padding: 10,
-  },
-  iconContainer: {
-    position: 'absolute',
-    right: 0,
-    padding: 10,
-  },
-  placeholder: {
-    position: 'absolute',
-    left: 10,
-    top: 10,
-    fontSize: 14,
-    color: 'gray',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 5,
   },
 });

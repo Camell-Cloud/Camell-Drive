@@ -130,18 +130,22 @@ export default function CustomDrawerContent({ navigation, setIsAuthenticated }) 
                 </View>
 
                 <View style={styles.logoutContainer}>
-                    <Pressable style={({pressed}) => 
-                        pressed 
-                            ? [styles.items, styles.pressed] 
-                            : styles.items
-                        }            
-                        onPress={() => async function(){
-                            await AsyncStorage.setItem('username', null);;
+                <Pressable
+                    style={({ pressed }) =>
+                        pressed ? [styles.items, styles.pressed] : styles.items
+                    }
+                    onPress={async () => {
+                        try {
+                            await AsyncStorage.removeItem('username'); // 키 삭제
                             setIsAuthenticated(false);
-                        }}
+                        } 
+                        catch (error) {
+                            console.error("Error during logout:", error);
+                        }
+                    }}
                     >
-                        <IconM name="logout" size={24} color={Colors.drawerIcon} style={styles.logoutIcon}/>
-                        <Text style={styles.itemText}>Logout</Text>
+                    <IconM name="logout" size={24} color={Colors.drawerIcon} style={styles.logoutIcon} />
+                    <Text style={styles.itemText}>Logout</Text>
                     </Pressable>
                 </View>
             </View>

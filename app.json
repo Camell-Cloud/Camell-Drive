@@ -1,30 +1,36 @@
 {
   "expo": {
-    "name": "Camell_Drive_Remake_Version_Develop",
-    "slug": "Camell_Drive_Remake_Version_Develop",
+    "name": "Camell Drive",
+    "slug": "camell-drive",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "scheme": "kr.co.glotn",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "image": "./assets/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#e45f7e"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.camt.Camell-Drive-Remake-Version-Develop"
+      "bundleIdentifier": "kr.co.glotn"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#e45f7e"
       },
-      "package": "com.camt.Camell_Drive_Remake_Version_Develop"
+      "package": "kr.co.glotn"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9e48ba44-a3e7-4dd9-a12c-f3f731455b26"
+      }
     }
   }
 }
