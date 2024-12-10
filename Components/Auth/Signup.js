@@ -8,7 +8,7 @@ import PrivateKeyModal from '../../Components/Auth/PrivateKeyModal';
 
 export default function Signup({navigation, setIsAuthenticated}){
 
-    const [userName, setUserName] = useState('');
+    const [username, setUserName] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
     const [privateKeyModalvisible, setPrivateKeyModalVisible] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -17,7 +17,7 @@ export default function Signup({navigation, setIsAuthenticated}){
       const response = await fetch("http://13.124.248.7:3000/auth/signup/checkUsername", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({ userName }),
+          body: JSON.stringify({ username }),
       })
       // username 중복 없으면
       if(response.ok){ setModalVisible(true) }
@@ -38,12 +38,12 @@ export default function Signup({navigation, setIsAuthenticated}){
 
             <View style={styles.inputContainer}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    {userName === '' && (
+                    {username === '' && (
                     <Text style={styles.placeholder}>Between 5 and 20 characters</Text>
                     )}
                     <TextInput
                         style={styles.input}
-                        value={userName}
+                        value={username}
                         onChangeText={setUserName}
                         placeholderTextColor="transparent"
                     />
@@ -66,14 +66,14 @@ export default function Signup({navigation, setIsAuthenticated}){
             <TermsOfServiceModal 
                 modalVisible={modalVisible} 
                 setModalVisible={setModalVisible} 
-                userName={userName} 
+                username={username} 
                 setPrivateKeyModalVisible={setPrivateKeyModalVisible}
             />
 
             <PrivateKeyModal
                 PrivateKeyModalVisible={privateKeyModalvisible} 
                 setPrivateKeyVisible={setPrivateKeyModalVisible}
-                userName = {userName}
+                username = {username}
                 navigation={navigation}
                 setIsAuthenticated={setIsAuthenticated}
             />

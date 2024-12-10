@@ -7,12 +7,13 @@ import Colors from '../Colors';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import * as Updates from 'expo-updates';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 export default function PrivateKeyModal({ 
     PrivateKeyModalVisible, 
     setPrivateKeyVisible,
-    userName, 
+    username, 
     navigation, 
     setIsAuthenticated 
 }) {
@@ -25,9 +26,13 @@ export default function PrivateKeyModal({
     const response = await fetch("http://13.124.248.7:3000/auth/signup/", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ userName, privateKey }),
+      body: JSON.stringify({ username, privateKey }),
     })
-    if(response.ok){ setIsAuthenticated(true) }
+    if(response.ok){ 
+      const data = await response.json()
+      await AsyncStorage.setItem('username', data.username); // response.username 사용
+      setIsAuthenticated(true);
+    }
     else { await Updates.reloadAsync(); } // 재시작
   }
 
