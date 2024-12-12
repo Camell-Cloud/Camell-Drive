@@ -68,5 +68,12 @@ export const DATA = () => [
     "addedDate": "2024-11-07",
     "fileType": "vector",
     "size": "0.8 MB"
+  },
+  {
+    "id": 11,
+    "name": "test.svg",
+    "addedDate": "2024-11-12",
+    "fileType": "vector",
+    "size": "0.3 MB"
   }
 ];
