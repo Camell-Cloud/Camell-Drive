@@ -58,6 +58,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 50,
   },
+
   Title: {
     color: Colors.primary400,
     fontSize: 28,
@@ -65,26 +66,31 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 20,
   },
+
   logo: {
     width: 110,
     height: 110,
     margin: 20,
   },
+
   top: {
     alignItems: 'center',
     flex: 0.7,
     justifyContent: 'center',
   },
+
   bottom: {
     flex: 1.5,
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
+
   login: {
     width: '80%',
     alignItems: 'center',
     margin: 10,
   },
+
   input: {
     fontSize: 12,
     width: '100%',
@@ -93,11 +99,13 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
   },
+
   loginText: {
     fontSize: 14,
     color: 'gray',
     marginVertical: 10,
   },
+
   signin: {
     borderColor: Colors.primary400,
     borderWidth: 1,
@@ -107,6 +115,7 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: Colors.authBackground,
   },
+  
   signinText: {
     color: Colors.primary400,
     fontWeight: '600',
