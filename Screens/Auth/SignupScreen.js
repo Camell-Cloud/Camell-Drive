@@ -41,7 +41,6 @@ export default function SignupScreen({ navigation, setIsAuthenticated }) {
         </SafeAreaView>
   );
 }
-
  
 const styles = StyleSheet.create({
     container: {
