@@ -27,7 +27,6 @@ export default function StartScreen({ navigation, setIsAuthenticated }) {
       <View style={styles.bottom}>
         <View style={styles.login}>
 
-          
           <Pressable
             style={styles.signin}
             onPress={() => navigation.navigate('Signup', { setIsAuthenticated })}
