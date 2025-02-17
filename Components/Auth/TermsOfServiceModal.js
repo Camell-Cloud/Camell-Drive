@@ -21,14 +21,12 @@ export default function TermsOfServiceModal({ modalVisible, setModalVisible, use
       visible={modalVisible}
       onRequestClose={() => setModalVisible(false)}
     >
-    <SafeAreaView style={{flex: 1,}}>
-        <View style={styles.modalBackground}>
-            <View style={styles.modalView}>
-
-                <Text style={styles.agreeTitle}>Agree to the Terms of Service</Text>
-                
-
-                    <View style={styles.agreeContainer}>
+  <SafeAreaView style={{ flex: 1 }}>
+      <View style={[styles.modalBackground, { flex: 1 }]}>
+          <View style={[styles.modalView, { flex: 1 }]}>
+              <Text style={styles.agreeTitle}>Agree to the Terms of Service</Text>
+              
+              <View style={[styles.agreeContainer, { flex: 1 }]}>
                         <ScrollView contentContainerStyle={styles.scrollContainer}>
 
 
@@ -259,16 +257,16 @@ const styles = StyleSheet.create({
     
   },
   agreeContainer: {
-    width: '100%',
-    height: '90%',
-    borderWidth: 0.5,
-    flex: 5,
-    borderColor: 'black',
-    marginVertical: 10,
-    backgroundColor: 'snow',
+      width: '100%',
+      flex: 4,  // 스크롤이 적용되도록 높이를 유동적으로 설정
+      borderWidth: 0.5,
+      borderColor: 'black',
+      marginVertical: 10,
+      backgroundColor: 'snow',
   },
   scrollContainer: {
     padding: 10,
+    flexGrow: 1,
   },
   sectionTitle: {
     fontWeight: 'bold',
