@@ -31,7 +31,8 @@ export default function Login({ navigation, setIsAuthenticated }) {
       } catch (error) {
           console.error("Login failed:", error);
           setErrorMessage("로그인 중 오류가 발생했습니다."); // 에러 메시지 설정
-      }
+          document.querySelector(".test[name='event']").getAttribute("message")
+        }
   }
 
   return (
