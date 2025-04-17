@@ -1,4 +1,3 @@
-
 export const DATA = () => [
   {
     "id": 1,
